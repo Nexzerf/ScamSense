@@ -1,5 +1,7 @@
 # Architecture
 
+Modules: **`:core`** (pure-Kotlin detection engine, call-guard policy, API models) is shared by **`:app`** (Android) and **`:server`** (Ktor AI call assistant), so a message, a link, a phone number and a *spoken* call are all judged by exactly the same rules. Call protection details: [CALL_ASSISTANT.md](CALL_ASSISTANT.md).
+
 ```
 ┌──────────────────────────── app (single module, single Activity) ────────────────────────────┐
 │                                                                                              │

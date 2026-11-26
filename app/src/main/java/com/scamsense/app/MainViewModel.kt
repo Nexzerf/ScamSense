@@ -7,12 +7,14 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.scamsense.app.data.AppSettings
-import com.scamsense.app.engine.AnalysisOutcome
-import com.scamsense.app.engine.CheckType
-import com.scamsense.app.engine.RiskResult
-import com.scamsense.app.engine.TextNormalizer
-import com.scamsense.app.engine.TransactionInput
-import com.scamsense.app.engine.UserRules
+import com.scamsense.app.data.AssistantClient
+import com.scamsense.core.api.CallRecordDto
+import com.scamsense.core.engine.AnalysisOutcome
+import com.scamsense.core.engine.CheckType
+import com.scamsense.core.engine.RiskResult
+import com.scamsense.core.engine.TextNormalizer
+import com.scamsense.core.engine.TransactionInput
+import com.scamsense.core.engine.UserRules
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -46,6 +48,18 @@ class MainViewModel(private val container: AppContainer) : ViewModel() {
 
     private val _sharedText = MutableStateFlow<SharedText?>(null)
     val sharedText: StateFlow<SharedText?> = _sharedText.asStateFlow()
+
+    /** Notification tap from the call guard: open the voice check. */
+    private val _voiceCheck = Channel<Unit>(Channel.CONFLATED)
+    val voiceCheckRequests = _voiceCheck.receiveAsFlow()
+
+    // ---- AI call assistant ----
+    private val _assistantCalls = MutableStateFlow<List<CallRecordDto>>(emptyList())
+    val assistantCalls: StateFlow<List<CallRecordDto>> = _assistantCalls.asStateFlow()
+    private val _assistantBusy = MutableStateFlow(false)
+    val assistantBusy: StateFlow<Boolean> = _assistantBusy.asStateFlow()
+    private val _assistantMessage = MutableStateFlow<String?>(null)
+    val assistantMessage: StateFlow<String?> = _assistantMessage.asStateFlow()
 
     /** One-shot "go to the result screen" events. */
     private val _showResult = Channel<Unit>(Channel.CONFLATED)
@@ -154,6 +168,69 @@ class MainViewModel(private val container: AppContainer) : ViewModel() {
 
     fun clearHistory() {
         viewModelScope.launch { container.historyRepository.clear() }
+    }
+
+    fun requestVoiceCheck() { _voiceCheck.trySend(Unit) }
+
+    fun clearAssistantMessage() { _assistantMessage.value = null }
+
+    fun pairAssistant(server: String, code: String) {
+        if (_assistantBusy.value) return
+        val client = container.assistantClient
+        val base = client.normaliseServer(server)
+        if (base == null) { _assistantMessage.value = "ที่อยู่เซิร์ฟเวอร์ต้องขึ้นต้นด้วย https://"; return }
+        if (code.trim().length < 6) { _assistantMessage.value = "รหัสจับคู่ไม่ครบ"; return }
+        viewModelScope.launch {
+            _assistantBusy.value = true
+            when (val r = client.pair(base, code)) {
+                is AssistantClient.Result.Ok -> {
+                    container.settingsRepository.update {
+                        it.copy(
+                            assistantServer = base,
+                            assistantToken = r.value.token,
+                            assistantNumber = r.value.assistantNumber,
+                            assistantName = r.value.subscriberName,
+                            forwardingConfirmed = false,
+                        )
+                    }
+                    _assistantMessage.value = "จับคู่สำเร็จ ขั้นต่อไป: ตั้งค่าโอนสาย"
+                }
+                is AssistantClient.Result.Error -> _assistantMessage.value = r.message
+            }
+            _assistantBusy.value = false
+        }
+    }
+
+    fun refreshAssistantCalls() {
+        val s = settings.value
+        if (!s.assistantPaired || _assistantBusy.value) return
+        viewModelScope.launch {
+            _assistantBusy.value = true
+            when (val r = container.assistantClient.calls(s.assistantServer, s.assistantToken)) {
+                is AssistantClient.Result.Ok -> _assistantCalls.value = r.value
+                is AssistantClient.Result.Error -> _assistantMessage.value = r.message
+            }
+            _assistantBusy.value = false
+        }
+    }
+
+    fun deleteAssistantCalls() {
+        val s = settings.value
+        if (!s.assistantPaired) return
+        viewModelScope.launch {
+            when (val r = container.assistantClient.deleteCalls(s.assistantServer, s.assistantToken)) {
+                is AssistantClient.Result.Ok -> { _assistantCalls.value = emptyList(); _assistantMessage.value = "ลบประวัติสายบนเซิร์ฟเวอร์แล้ว" }
+                is AssistantClient.Result.Error -> _assistantMessage.value = r.message
+            }
+        }
+    }
+
+    /** Forget the pairing locally. Call forwarding must also be cancelled on the SIM. */
+    fun unpairAssistant() {
+        _assistantCalls.value = emptyList()
+        updateSettings {
+            it.copy(assistantServer = "", assistantToken = "", assistantNumber = "", assistantName = "", forwardingConfirmed = false)
+        }
     }
 
     private fun AppSettings.toRules() = UserRules(customBlockWords, blockedNumbers)

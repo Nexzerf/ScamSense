@@ -18,16 +18,18 @@ jobs:
           distribution: temurin
           java-version: 17
       - uses: gradle/actions/setup-gradle@v4
-      - name: Unit, render and flow tests
-        run: ./gradlew testDebugUnitTest
+      - name: Engine, server, app render and flow tests
+        run: ./gradlew :core:test :server:test :app:testDebugUnitTest
       - name: Lint
         run: ./gradlew lintRelease
-      - name: Build APKs
-        run: ./gradlew assembleDebug assembleRelease
+      - name: Build APKs and server jar
+        run: ./gradlew :app:assembleDebug :app:assembleRelease :server:fatJar
       - uses: actions/upload-artifact@v4
         with:
           name: scamsense-apks
-          path: app/build/outputs/apk/**/*.apk
+          path: |
+            app/build/outputs/apk/**/*.apk
+            server/build/libs/scamsense-server.jar
       - uses: actions/upload-artifact@v4
         if: always()
         with:

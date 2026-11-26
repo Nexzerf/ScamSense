@@ -15,13 +15,17 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.scamsense.app.StartupState
 import com.scamsense.app.data.AppSettings
 import com.scamsense.app.data.TextScale
-import com.scamsense.app.engine.AnalysisOutcome
-import com.scamsense.app.engine.CheckType
-import com.scamsense.app.engine.RiskResult
-import com.scamsense.app.engine.ScamAnalyzer
-import com.scamsense.app.engine.TransactionInput
-import com.scamsense.app.engine.TransactionSituation
+import com.scamsense.core.engine.AnalysisOutcome
+import com.scamsense.core.engine.CheckType
+import com.scamsense.core.engine.RiskResult
+import com.scamsense.core.engine.ScamAnalyzer
+import com.scamsense.core.engine.TransactionInput
+import com.scamsense.core.engine.TransactionSituation
+import com.scamsense.app.ui.screens.CallGuardScreen
+import com.scamsense.app.ui.screens.CallLogScreen
 import com.scamsense.app.ui.screens.CheckScreen
+import com.scamsense.core.api.CallOutcome
+import com.scamsense.core.api.CallRecordDto
 import com.scamsense.app.ui.screens.HistoryScreen
 import com.scamsense.app.ui.screens.HomeScreen
 import com.scamsense.app.ui.screens.LoadingScreen
@@ -154,6 +158,34 @@ class ScreenRenderTest {
 
     @Test fun homeExtraLargeText() = shoot("11_home_xl_text", scale = TextScale.EXTRA_LARGE.factor) {
         HomeScreen(caregiver, emptyList(), { _, _ -> }, {}, {}, {}, {})
+    }
+
+    @Test fun callGuardSetup() = shoot("12_call_guard") {
+        CallGuardScreen(AppSettings(), false, {}, { _, _ -> }, {}, {}, {}, {})
+    }
+
+    @Test fun callGuardPaired() = shoot("12b_call_guard_paired") {
+        CallGuardScreen(
+            AppSettings(assistantServer = "https://assist.example.com", assistantToken = "t".repeat(43),
+                assistantNumber = "+6621234567", assistantName = "สมศรี", forwardingConfirmed = true),
+            false, {}, { _, _ -> }, {}, {}, {}, {},
+        )
+    }
+
+    @Test fun callLog() = shoot("13_call_log") {
+        val now = System.currentTimeMillis()
+        CallLogScreen(
+            listOf(
+                CallRecordDto(1, "+66899990000", now - 120_000, CallOutcome.BLOCKED, 100, "DANGEROUS", "แก๊งคอลเซ็นเตอร์อ้างเป็นตำรวจ",
+                    listOf("ให้โอนเงินไป \"บัญชีปลอดภัย\"", "ขู่ว่าคุณพัวพันคดี"),
+                    listOf("ผมโทรจากสถานีตำรวจ บัญชีคุณพัวพันคดีฟอกเงิน", "ต้องโอนเงินไปบัญชีปลอดภัยเพื่อตรวจสอบ")),
+                CallRecordDto(2, "+66812220000", now - 3_600_000, CallOutcome.CONNECTED, 0, "SAFE", null, emptyList(),
+                    listOf("โทรจากคลินิกทันตกรรม เรื่องนัดทำฟัน")),
+                CallRecordDto(3, "+66655550000", now - 7_200_000, CallOutcome.MESSAGE_TAKEN, 47, "SUSPICIOUS", "เงินกู้ปลอม",
+                    listOf("เสนอเงินกู้อนุมัติง่ายผิดปกติ"), listOf("มีสินเชื่อ อนุมัติไว แอดไลน์ได้เลยครับ")),
+            ),
+            false, {}, {}, {},
+        )
     }
 
     @Test fun checkScreenExampleChipFillsText() {

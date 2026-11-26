@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Monochrome status-bar icon (must be white-on-transparent). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M24,2 L42,8.8 L42,21.8 C42,33 34.5,42.4 24,45.5 C13.5,42.4 6,33 6,21.8 L6,8.8 Z M21.8,30.3 L15.5,24 L12.6,26.9 L21.8,36.1 L35.9,21.1 L33,18.2 Z" />
+</vector>

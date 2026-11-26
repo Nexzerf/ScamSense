@@ -20,4 +20,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "ScamSense"
-include(":app")
+include(":core", ":app", ":server")

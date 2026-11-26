@@ -63,8 +63,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.scamsense.app.engine.CheckType
-import com.scamsense.app.engine.TextNormalizer
+import com.scamsense.core.engine.CheckType
+import com.scamsense.core.engine.TextNormalizer
 import com.scamsense.app.ui.components.AnalyzingIndicator
 import com.scamsense.app.ui.components.BigButton
 import com.scamsense.app.util.rememberSpeechInput

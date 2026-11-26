@@ -4,7 +4,7 @@
 .idea/
 .DS_Store
 /build/
-/app/build/
+build/
 /captures/
 .externalNativeBuild/
 .cxx/
@@ -13,3 +13,9 @@
 *.jks
 *.keystore
 keystore.properties
+
+# Server secrets
+.env
+*.db
+*.db-wal
+*.db-shm

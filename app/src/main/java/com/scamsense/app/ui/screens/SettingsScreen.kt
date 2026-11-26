@@ -60,6 +60,7 @@ fun SettingsScreen(
     onUpdate: ((AppSettings) -> AppSettings) -> Unit,
     onSaved: (String) -> Unit,
     modifier: Modifier = Modifier,
+    onOpenCallGuard: () -> Unit = {},
 ) {
     var name by rememberSaveable { mutableStateOf(settings.caregiverName) }
     var phone by rememberSaveable { mutableStateOf(settings.caregiverPhone) }
@@ -117,6 +118,15 @@ fun SettingsScreen(
                     onSaved(if (phone.isBlank()) "ลบผู้ดูแลแล้ว" else "บันทึกผู้ดูแลแล้ว")
                 }
             })
+        }
+
+        // ---------------------------------------------------------------- call guard
+        SectionTitle("ป้องกันสายโทร")
+        SettingsCard {
+            Text("กรองสายจากเบอร์อันตราย และให้ผู้ช่วย AI รับสายเบอร์แปลกแทน",
+                style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Spacer(Modifier.size(12.dp))
+            BigButton("ตั้งค่าป้องกันสายโทร", icon = Icons.Rounded.Lock, onClick = onOpenCallGuard)
         }
 
         // ---------------------------------------------------------------- display

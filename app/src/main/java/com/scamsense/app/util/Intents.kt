@@ -4,9 +4,10 @@ import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import com.scamsense.app.engine.RiskLevel
-import com.scamsense.app.engine.RiskResult
-import com.scamsense.app.engine.TextNormalizer
+import androidx.core.net.toUri
+import com.scamsense.core.engine.RiskLevel
+import com.scamsense.core.engine.RiskResult
+import com.scamsense.core.engine.TextNormalizer
 
 /**
  * Every outbound action opens the user's own app with the content pre-filled, so the
@@ -20,6 +21,12 @@ object Intents {
         val clean = number.filter { it.isDigit() || it == '+' }
         if (clean.isEmpty()) return false
         return start(context, Intent(Intent.ACTION_DIAL, Uri.fromParts("tel", clean, null)))
+    }
+
+    /** Opens the dialer with a GSM/MMI code (e.g. call forwarding); the user presses call. */
+    fun dialCode(context: Context, code: String): Boolean {
+        if (code.isEmpty() || code.any { !(it.isDigit() || it in "*#+") }) return false
+        return start(context, Intent(Intent.ACTION_DIAL, ("tel:" + Uri.encode(code)).toUri()))
     }
 
     fun smsCaregiver(context: Context, phone: String, body: String): Boolean {

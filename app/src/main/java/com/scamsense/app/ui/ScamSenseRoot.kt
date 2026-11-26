@@ -55,9 +55,11 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.scamsense.app.MainViewModel
-import com.scamsense.app.engine.CheckType
+import com.scamsense.core.engine.CheckType
 import com.scamsense.app.ui.components.BrandShield
 import com.scamsense.app.ui.theme.Brand
+import com.scamsense.app.ui.screens.CallGuardScreen
+import com.scamsense.app.ui.screens.CallLogScreen
 import com.scamsense.app.ui.screens.CheckScreen
 import com.scamsense.app.ui.screens.HistoryScreen
 import com.scamsense.app.ui.screens.HomeScreen
@@ -75,6 +77,8 @@ object Routes {
     const val CHECK = "check/{type}?voice={voice}"
     const val TRANSACTION = "transaction"
     const val RESULT = "result"
+    const val CALL_GUARD = "callguard"
+    const val CALL_LOG = "calllog"
     fun check(type: CheckType, voice: Boolean = false) = "check/${type.name}?voice=$voice"
 }
 
@@ -111,6 +115,9 @@ private fun AppNavigation(vm: MainViewModel, nav: NavHostController = rememberNa
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     var sharedForCheck by remember { mutableStateOf<String?>(null) }
+    val assistantCalls by vm.assistantCalls.collectAsStateWithLifecycle()
+    val assistantBusy by vm.assistantBusy.collectAsStateWithLifecycle()
+    val assistantMessage by vm.assistantMessage.collectAsStateWithLifecycle()
 
     fun toast(msg: String) { scope.launch { snackbar.currentSnackbarData?.dismiss(); snackbar.showSnackbar(msg) } }
 
@@ -122,6 +129,15 @@ private fun AppNavigation(vm: MainViewModel, nav: NavHostController = rememberNa
                 launchSingleTop = true
             }
         }
+    }
+    LaunchedEffect(Unit) {
+        vm.voiceCheckRequests.collect {
+            sharedForCheck = null
+            nav.navigate(Routes.check(CheckType.MESSAGE, voice = true)) { popUpTo(Routes.HOME); launchSingleTop = true }
+        }
+    }
+    LaunchedEffect(assistantMessage) {
+        assistantMessage?.let { toast(it); vm.clearAssistantMessage() }
     }
     // Text shared from another app ("ตรวจด้วย ScamSense"): check it immediately.
     LaunchedEffect(shared) {
@@ -202,6 +218,7 @@ private fun AppNavigation(vm: MainViewModel, nav: NavHostController = rememberNa
                     onCallHotline = { if (!Intents.dial(context, Intents.AOC_HOTLINE)) toast("เครื่องนี้โทรออกไม่ได้ กรุณาโทร 1441 จากโทรศัพท์") },
                     onCallCaregiver = { if (!Intents.dial(context, settings.caregiverPhone)) toast("ไม่พบแอปโทรศัพท์") },
                     onOpenSettings = { nav.navigate(Routes.SETTINGS) { launchSingleTop = true } },
+                    onOpenCallGuard = { nav.navigate(Routes.CALL_GUARD) },
                 )
             }
             composable(Routes.HISTORY) {
@@ -213,7 +230,31 @@ private fun AppNavigation(vm: MainViewModel, nav: NavHostController = rememberNa
                 )
             }
             composable(Routes.SETTINGS) {
-                SettingsScreen(settings = settings, onUpdate = vm::updateSettings, onSaved = ::toast)
+                SettingsScreen(
+                    settings = settings, onUpdate = vm::updateSettings, onSaved = ::toast,
+                    onOpenCallGuard = { nav.navigate(Routes.CALL_GUARD) },
+                )
+            }
+            composable(Routes.CALL_GUARD) {
+                CallGuardScreen(
+                    settings = settings,
+                    assistantBusy = assistantBusy,
+                    onUpdate = vm::updateSettings,
+                    onPair = vm::pairAssistant,
+                    onUnpair = { vm.unpairAssistant(); toast("ยกเลิกการจับคู่แล้ว อย่าลืมยกเลิกการโอนสายในซิมด้วย") },
+                    onDialCode = { if (!Intents.dialCode(context, it)) toast("เปิดหน้าโทรศัพท์ไม่ได้") },
+                    onOpenCallLog = { nav.navigate(Routes.CALL_LOG) },
+                    onBack = { nav.popBackStack() },
+                )
+            }
+            composable(Routes.CALL_LOG) {
+                CallLogScreen(
+                    calls = assistantCalls,
+                    busy = assistantBusy,
+                    onRefresh = vm::refreshAssistantCalls,
+                    onDeleteAll = vm::deleteAssistantCalls,
+                    onBack = { nav.popBackStack() },
+                )
             }
             composable(
                 Routes.CHECK,

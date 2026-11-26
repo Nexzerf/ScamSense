@@ -135,7 +135,7 @@ footer{text-align:center;color:var(--muted);font-size:14px;padding:10px}
 <header class="page">
   <h1>ScamSense — UI Mockup</h1>
   <p>แอปคัดกรองและแจ้งเตือนความเสี่ยงมิจฉาชีพ สำหรับผู้สูงอายุและครอบครัว (Android)</p>
-  <div class="pills"><span>ทำงานในเครื่อง 100%</span><span>ไม่ขอสิทธิ์ใด ๆ</span><span>ตัวอักษรใหญ่ อ่านง่าย</span><span>Android 6.0 – 15</span><span>สั่งด้วยเสียงได้</span></div>
+  <div class="pills"><span>ทำงานในเครื่อง 100%</span><span>สิทธิ์น้อยที่สุด</span><span>ตัวอักษรใหญ่ อ่านง่าย</span><span>Android 6.0 – 15</span><span>สั่งด้วยเสียงได้</span><span>AI รับสายแทน</span></div>
 </header>
 <main>
   <section class="block">
@@ -171,10 +171,12 @@ footer{text-align:center;color:var(--muted);font-size:14px;padding:10px}
     <h2>สถาปัตยกรรมระบบ</h2>
     <p class="lead">Single-activity, Jetpack Compose + MVVM, เอนจินตรวจจับเป็น Kotlin ล้วน (ทดสอบได้ไม่ต้องใช้มือถือ)</p>
     <div class="flow"><span>ข้อความ / เสียง / แชร์</span><em>→</em><span>Normalize (กันการเลี่ยงคำ)</span><em>→</em><span>Keyword + Fuzzy</span><em>+</em><span>Similarity (n-gram TF-IDF)</span><em>+</em><span>ลิงก์ / เบอร์</span><em>→</em><span>คะแนน + เหตุผล</span></div>
+    <div class="flow"><span>สายเบอร์แปลก</span><em>→</em><span>กรองสายในเครื่อง</span><em>→</em><span>โอนให้ผู้ช่วย AI</span><em>→</em><span>เสียง → ข้อความ</span><em>→</em><span>เอนจินเดียวกัน</span><em>→</em><span>วางสาย + SMS / โอนสายเข้า</span></div>
     <div class="arch">
       <div><h4>UI (Compose, Material 3)</h4><ul><li>Loading, Home, Check, Result</li><li>Transaction, History, Settings</li><li>ปรับขนาดตัวอักษร / ธีมมืด</li></ul></div>
       <div><h4>ViewModel</h4><ul><li>StateFlow, งานหนักบน Dispatchers.Default</li><li>รับข้อความที่แชร์ (ตรวจความปลอดภัยก่อน)</li></ul></div>
       <div><h4>Detection Engine</h4><ul><li>19 กลุ่มกฎ ~300 คำ + คำสะกดผิด 1 ตัว</li><li>เทียบความคล้าย 35 รูปแบบกลโกง</li><li>ตรวจลิงก์ปลอม / ลิงก์ย่อ / .apk / ตัวอักษรหลอกตา</li><li>เบอร์ต่างประเทศ / +697 / +698</li></ul></div>
+      <div><h4>AI Call Assistant (เซิร์ฟเวอร์)</h4><ul><li>รับสายที่ถูกโอน ถามธุระเป็นภาษาไทย</li><li>ตรวจลายเซ็น Twilio, กัน TwiML injection</li><li>SMS เตือนผู้สูงอายุ + ลูกหลาน</li><li>ลบบันทึกอัตโนมัติ 30 วัน</li></ul></div>
       <div><h4>Data (เข้ารหัส)</h4><ul><li>AES-256-GCM, กุญแจใน Android Keystore</li><li>ไม่สำรองข้อมูลขึ้นคลาวด์</li><li>ซ่อนเลขบัญชีในประวัติ</li></ul></div>
     </div>
   </section>
@@ -211,7 +213,10 @@ const P={
  gavel:'M1 21h12v2H1v-2ZM5.24 8.07l2.83-2.83 14.14 14.14-2.83 2.83L5.24 8.07ZM12.32 1l5.66 5.66-2.83 2.83-5.66-5.66L12.32 1ZM3.83 9.48l5.66 5.66-2.83 2.83L1 12.31l2.83-2.83Z',
  clock:'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm4.2 14.2L11 13V7h1.5v5.2l4.5 2.7-.8 1.3Z',
  person:'M10 4a4 4 0 1 1 0 8 4 4 0 0 1 0-8Zm0 10c4.42 0 8 1.79 8 4v2H2v-2c0-2.21 3.58-4 8-4Zm9.5-3.5 1.5 1.5-3.5 3.5L15 13l1.5-1.5 1 1 2-2Z',
- add:'M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2Z'
+ add:'M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2Z',
+ bot:'M20 9V7c0-1.1-.9-2-2-2h-3c0-1.66-1.34-3-3-3S9 3.34 9 5H6c-1.1 0-2 .9-2 2v2c-1.66 0-3 1.34-3 3s1.34 3 3 3v4c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-4c1.66 0 3-1.34 3-3s-1.34-3-3-3ZM7.5 11.5a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0ZM16 17H8v-2h8v2Zm-.5-4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Z',
+ fwd:'M18 11 23 6l-5-5v3h-4v4h4v3ZM20 15.5c-1.25 0-2.45-.2-3.57-.57a1 1 0 0 0-1.02.24l-2.2 2.2a15.05 15.05 0 0 1-6.59-6.59l2.2-2.2a1 1 0 0 0 .25-1.02A11.4 11.4 0 0 1 8.5 4a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1 17 17 0 0 0 17 17 1 1 0 0 0 1-1v-3.5a1 1 0 0 0-1-1Z',
+ end:'M12 9c-1.6 0-3.15.25-4.6.72v3.1c0 .39-.23.74-.56.9-.98.49-1.87 1.12-2.66 1.85-.18.18-.43.28-.7.28-.28 0-.53-.11-.71-.29L.29 13.08a.996.996 0 0 1 0-1.41C3.34 8.78 7.46 7 12 7s8.66 1.78 11.71 4.67c.18.18.29.43.29.71 0 .28-.11.53-.29.71l-2.48 2.48c-.18.18-.43.29-.71.29-.27 0-.52-.11-.7-.28a11.27 11.27 0 0 0-2.67-1.85.996.996 0 0 1-.56-.9v-3.1C15.15 9.25 13.6 9 12 9Z'
 };
 const ic=(n,c='currentColor',s='1.25em')=>`<svg class="ico" viewBox="0 0 24 24" style="width:${s};height:${s};fill:${c}"><path d="${P[n]}"/></svg>`;
 const shield=(c='#fff',k='#1E4FD8',s=30)=>`<svg width="${s}" height="${s}" viewBox="0 0 48 48"><path fill="${c}" d="M24 2 42 8.8V21.8C42 33 34.5 42.4 24 45.5 13.5 42.4 6 33 6 21.8V8.8Z"/><path fill="none" stroke="${k}" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" d="M15.5 24 21.8 30.3 33 18.2"/></svg>`;
@@ -280,6 +285,7 @@ const S={
    <div class="tile" onclick="go('check','link')"><div class="ib" style="background:#EDE4FE">${ic('link','#7C3AED','1.5em')}</div><b>ลิงก์</b><small>เว็บที่ถูกส่งมา</small></div>
    <div class="tile" onclick="go('check','phone')"><div class="ib" style="background:#D6EEF3">${ic('phone','#0E7490','1.5em')}</div><b>เบอร์โทร</b><small>เบอร์ที่โทรเข้ามา</small></div>
    <div class="tile" onclick="go('tx')"><div class="ib" style="background:#F6E7D6">${ic('pay','#B45309','1.5em')}</div><b>การโอนเงิน</b><small>ก่อนกดโอน ตรวจก่อน</small></div></div>
+  <div class="card" onclick="go('guard')" style="cursor:pointer"><span class="av" style="background:var(--safe-c)">${ic('lock','#15803D','1.3em')}</span><div class="grow"><b>ป้องกันสายโทร</b><small style="color:var(--safe)">เปิดอยู่ • ผู้ช่วย AI รับสายเบอร์แปลกให้ก่อน</small></div>${ic('fwd','#1E4FD8')}</div>
   <div class="card"><span class="av" style="background:var(--pc)">${ic('family','#0A2472','1.4em')}</span><div class="grow"><small>ผู้ดูแลของคุณ</small><b>ลูกสาว สมใจ</b><small style="color:var(--brand)">แตะเพื่อโทรหา</small></div>${ic('call','#1E4FD8')}</div>
   <div class="card red"><span class="av" style="background:var(--danger)">${ic('call','#fff')}</span><div class="grow"><b>โดนหลอก หรือไม่แน่ใจ?</b><div style="font-size:.9em">โทรสายด่วน 1441 ศูนย์ AOC ตลอด 24 ชม.</div></div></div>
   <div class="card tip">${ic('bulb','#083344','1.6em')}<div><b>รู้ทันกลโกงวันนี้</b><div style="font-size:.92em">ตำรวจจริงไม่โทรมาให้โอนเงินเพื่อ "ตรวจสอบ" ถ้ามีคนพูดแบบนี้ ให้วางสายทันที</div></div></div>
@@ -314,6 +320,20 @@ const S={
   <input class="field" value="80,000" style="font-size:1.4em;font-weight:600"><div class="card"><div class="grow"><b>รู้จักผู้รับเงินเป็นการส่วนตัว</b><small>เคยเจอตัวจริง หรือเป็นญาติ/เพื่อน</small></div><div class="toggle" style="background:#CBD5E1"></div></div>
   <div class="sec">มีเหตุการณ์เหล่านี้ไหม</div>${items.map((t,i)=>`<div class="check-row ${i<2?'on':''}" onclick="this.classList.toggle('on')"><span class="box">✓</span>${t}</div>`).join('')}
   <button class="btn primary" style="margin-top:8px;min-height:54px" onclick="txRun()">${ic('search')} ประเมินความเสี่ยง</button></div></div>`},
+ guard:()=>`${status()}${sub('ป้องกันสายโทร')}<div class="scroll"><div class="pad"><p class="muted" style="margin-bottom:8px">ตรวจสายจากเบอร์ที่ไม่อยู่ในรายชื่อก่อนเครื่องดัง สายจากคนในรายชื่อดังตามปกติเสมอ</p>
+  <div class="sec">1. เปิดการกรองสาย</div><div class="whitecard"><div class="reason"><span class="dot" style="background:var(--safe-c)">${ic('ok','#15803D')}</span><div><b>กรองสายก่อนเครื่องดัง</b><small>เปิดอยู่ — บล็อก +697/+698 และเบอร์ที่รายงานไว้</small></div></div><div class="reason"><span class="dot" style="background:var(--safe-c)">${ic('ok','#15803D')}</span><div><b>การแจ้งเตือน</b><small>เปิดอยู่</small></div></div>
+  <div style="display:flex;align-items:center;gap:10px;margin-top:6px"><div style="flex:1"><b>บล็อกสายต่างประเทศทั้งหมด</b><small class="muted" style="display:block">ระวัง: ลูกหลานในต่างประเทศ ให้บันทึกเบอร์ในรายชื่อก่อน</small></div><div class="toggle" style="background:#CBD5E1"></div></div></div>
+  <div class="sec">2. ผู้ช่วย AI รับสายแทน</div><div class="whitecard"><div class="reason"><span class="dot" style="background:var(--safe-c)">${ic('bot','#15803D')}</span><div><b>จับคู่แล้ว: สมศรี</b><small>เบอร์ผู้ช่วย 02-123-4567</small></div></div>
+  <button class="btn outline" style="color:var(--brand);margin-top:6px">${ic('fwd')} ก. โอนสายเมื่อไม่ว่าง (จำเป็น)</button><button class="btn outline" style="color:var(--brand);margin-top:6px">${ic('fwd')} ข. โอนสายเมื่อไม่รับสาย</button>
+  <div class="check-row on" style="margin-top:8px"><span class="box">✓</span>ตั้งค่าโอนสายข้อ ก. เรียบร้อยแล้ว</div>
+  <button class="btn primary" onclick="go('calllog')">${ic('hist')} ดูสายที่ผู้ช่วยรับแทน</button></div></div></div>`,
+ calllog:()=>`${status()}${sub('สายที่ผู้ช่วยรับแทน')}<div class="scroll"><div class="pad">
+  <div class="whitecard" style="margin-bottom:10px"><div style="display:flex;gap:10px;align-items:center"><span class="score" style="background:var(--danger-c)">${ic('end','#C81E1E','1.3em')}</span><div style="flex:1"><b style="color:var(--danger)">วางสายมิจฉาชีพให้แล้ว</b><small class="muted" style="display:block">089-999-0000 • 2 นาทีที่แล้ว</small></div><b style="color:var(--danger);font-size:1.3em">100</b></div>
+   <b style="display:block;margin-top:8px">ลักษณะ: แก๊งคอลเซ็นเตอร์อ้างเป็นตำรวจ</b><small class="muted" style="display:block;margin-top:6px">ผู้โทรพูดว่า</small><div class="ev" style="display:block;padding:8px 10px;font-size:.92em">"ผมโทรจากสถานีตำรวจ บัญชีคุณพัวพันคดีฟอกเงิน"</div><div class="ev" style="display:block;padding:8px 10px;font-size:.92em;margin-top:6px">"ต้องโอนเงินไปบัญชีปลอดภัยเพื่อตรวจสอบ"</div>
+   <small class="muted" style="display:block;margin-top:8px">${ic('sms','#475569','1em')} ส่ง SMS เตือนคุณและลูกสาว สมใจ แล้ว</small></div>
+  <div class="whitecard" style="margin-bottom:10px"><div style="display:flex;gap:10px;align-items:center"><span class="score" style="background:var(--safe-c)">${ic('call','#15803D','1.2em')}</span><div style="flex:1"><b style="color:var(--safe)">ปลอดภัย โอนสายให้แล้ว</b><small class="muted" style="display:block">081-222-0000 • 1 ชั่วโมงที่แล้ว</small></div><b style="color:var(--safe);font-size:1.3em">0</b></div><small style="color:var(--brand);display:block;margin-top:6px">"โทรจากคลินิกทันตกรรม เรื่องนัดทำฟัน"</small></div>
+  <div class="whitecard"><div style="display:flex;gap:10px;align-items:center"><span class="score" style="background:var(--warn-c)">${ic('sms','#B45309','1.2em')}</span><div style="flex:1"><b style="color:var(--warn)">น่าสงสัย รับฝากข้อความไว้</b><small class="muted" style="display:block">065-555-0000 • 2 ชั่วโมงที่แล้ว</small></div><b style="color:var(--warn);font-size:1.3em">47</b></div><b style="display:block;margin-top:6px">ลักษณะ: เงินกู้ปลอม</b></div>
+ </div></div>`,
  history:()=>`${status()}${tabTop}<div class="scroll"><div class="pad"><div style="display:flex;justify-content:space-between;align-items:center"><div class="sec">ประวัติการตรวจ (4)</div><span style="color:var(--brand);font-weight:600">ลบทั้งหมด</span></div>
   ${[[100,'d','เมื่อสักครู่','sms','ติดต่อจากสถานีตำรวจ บัญชีของท่านพัวพันคดีฟอกเงิน…'],[30,'w','1 ชั่วโมงที่แล้ว','link','bit.ly/3xYz9'],[10,'s','2 ชั่วโมงที่แล้ว','phone','081-•••-•678'],[78,'d','3 ชั่วโมงที่แล้ว','sms','พัสดุของท่านจัดส่งไม่สำเร็จ กรุณาอัปเดตที่อยู่…']].map(([s,l,t,i,p])=>`<div class="hist"><span class="score" style="background:${LV[l][2]};color:${LV[l][3]}">${s}</span><div style="flex:1;min-width:0"><div style="display:flex;gap:6px;align-items:center">${ic(i,'#475569','1em')}<span class="lvl" style="background:${LV[l][2]};color:${LV[l][3]}">${LV[l][0]}</span><span class="muted" style="margin-left:auto;font-size:.78em">${t}</span></div><div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p}</div></div></div>`).join('')}
   <p class="muted" style="font-size:.82em;text-align:center;margin-top:8px">${ic('lock','#475569','1em')} เก็บแบบเข้ารหัสในเครื่องนี้เท่านั้น</p></div></div>${nav('history')}`,
@@ -330,7 +350,7 @@ function run(){const v=document.getElementById('inp').value.trim();if(!v){docume
 function txRun(){live.innerHTML=S.analyzing();setTimeout(()=>{live.innerHTML=S.result({score:100,level:'d',block:true,hits:[{w:50,cat:'MONEY',t:'ถูกบอกให้โอนเงินไป "บัญชีปลอดภัย"',d:'ไม่มีหน่วยงานใดให้โอนเงินไปตรวจสอบ นี่คือกลโกงแน่นอน'},{w:35,cat:'IMPERSONATION',t:'ผู้ติดต่ออ้างเป็นตำรวจ เจ้าหน้าที่รัฐ หรือธนาคาร',d:'เจ้าหน้าที่จริงไม่ขอให้โอนเงิน'},{w:15,cat:'MONEY',t:'จำนวนเงินสูงมาก',d:'ยอด 80,000 บาท ควรปรึกษาลูกหลานก่อน'},{w:15,cat:'MONEY',t:'ไม่รู้จักผู้รับเงินเป็นการส่วนตัว',d:'เงินที่โอนให้คนแปลกหน้า มักตามคืนไม่ได้'}]})},700)}
 go('loading');
 /* gallery */
-const G=[['หน้าโหลด (Loading)',S.loading()],['หน้าหลัก',S.home()],['ตรวจข้อความ (พิมพ์/วาง/พูด)',S.check('msg')],['กำลังวิเคราะห์',S.analyzing()],['ผล: อันตราย + บล็อก',S.result(analyze(EX[0]))],['ผล: ลิงก์พัสดุปลอม',S.result(analyze(EX[1]))],['ผล: ความเสี่ยงต่ำ',S.result(analyze(EX[2]))],['ตรวจก่อนโอนเงิน',S.tx()],['ประวัติ (เข้ารหัส)',S.history()],['ตั้งค่า / ผู้ดูแล',S.settings()]];
+const G=[['หน้าโหลด (Loading)',S.loading()],['หน้าหลัก',S.home()],['ตรวจข้อความ (พิมพ์/วาง/พูด)',S.check('msg')],['กำลังวิเคราะห์',S.analyzing()],['ผล: อันตราย + บล็อก',S.result(analyze(EX[0]))],['ผล: ลิงก์พัสดุปลอม',S.result(analyze(EX[1]))],['ผล: ความเสี่ยงต่ำ',S.result(analyze(EX[2]))],['ตรวจก่อนโอนเงิน',S.tx()],['ประวัติ (เข้ารหัส)',S.history()],['ตั้งค่า / ผู้ดูแล',S.settings()],['ป้องกันสายโทร + ผู้ช่วย AI',S.guard()],['สายที่ผู้ช่วย AI รับแทน',S.calllog()]];
 document.getElementById('gallery').innerHTML=G.map(([c,h])=>`<figure><div class="phone"><div class="screen">${h}</div></div><figcaption>${c}</figcaption></figure>`).join('');
 </script>
 </body>

@@ -74,11 +74,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.scamsense.app.data.AppSettings
-import com.scamsense.app.engine.CheckType
-import com.scamsense.app.engine.RiskLevel
-import com.scamsense.app.engine.RiskResult
-import com.scamsense.app.engine.RiskSignal
-import com.scamsense.app.engine.SignalCategory
+import com.scamsense.core.engine.CheckType
+import com.scamsense.core.engine.RiskLevel
+import com.scamsense.core.engine.RiskResult
+import com.scamsense.core.engine.RiskSignal
+import com.scamsense.core.engine.SignalCategory
 import com.scamsense.app.ui.components.BigButton
 import com.scamsense.app.ui.components.BigOutlinedButton
 import com.scamsense.app.ui.components.IconRow

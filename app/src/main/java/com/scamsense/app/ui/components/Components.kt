@@ -58,7 +58,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.scamsense.app.engine.RiskLevel
+import com.scamsense.core.engine.RiskLevel
 import com.scamsense.app.ui.theme.label
 import com.scamsense.app.ui.theme.riskColors
 

@@ -13,6 +13,7 @@ import com.scamsense.app.ui.ScamSenseRoot
 import com.scamsense.app.ui.theme.ScamSenseTheme
 import com.scamsense.app.ui.theme.isAppInDarkTheme
 import com.scamsense.app.util.Intents
+import com.scamsense.app.calls.CallNotifications
 import androidx.activity.compose.setContent
 
 class MainActivity : ComponentActivity() {
@@ -46,6 +47,10 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun handleShareIntent(intent: Intent?) {
+        if (intent?.action == CallNotifications.ACTION_CHECK_CALL) {
+            viewModel.requestVoiceCheck()
+            return
+        }
         viewModel.onSharedText(Intents.extractSharedText(intent))
     }
 }

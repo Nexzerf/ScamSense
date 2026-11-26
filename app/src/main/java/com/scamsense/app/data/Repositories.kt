@@ -1,10 +1,10 @@
 package com.scamsense.app.data
 
-import com.scamsense.app.engine.CheckType
-import com.scamsense.app.engine.RiskLevel
-import com.scamsense.app.engine.RiskResult
-import com.scamsense.app.engine.RiskSignal
-import com.scamsense.app.engine.SignalCategory
+import com.scamsense.core.engine.CheckType
+import com.scamsense.core.engine.RiskLevel
+import com.scamsense.core.engine.RiskResult
+import com.scamsense.core.engine.RiskSignal
+import com.scamsense.core.engine.SignalCategory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -32,8 +32,22 @@ data class AppSettings(
     val saveHistory: Boolean = true,
     val customBlockWords: List<String> = emptyList(),
     val blockedNumbers: List<String> = emptyList(),
+    // ---- Call protection (phase 1: on-device screening) ----
+    val callWarnings: Boolean = true,
+    val blockInternational: Boolean = false,
+    // ---- AI call assistant (phase 2) ----
+    val assistantServer: String = "",
+    val assistantToken: String = "",
+    val assistantNumber: String = "",
+    val assistantName: String = "",
+    /** User confirmed busy-forwarding to the assistant number was set up on the SIM. */
+    val forwardingConfirmed: Boolean = false,
+    val sendUnknownToAssistant: Boolean = true,
 ) {
     val hasCaregiver: Boolean get() = caregiverPhone.isNotBlank()
+    val assistantPaired: Boolean get() = assistantToken.isNotBlank() && assistantServer.isNotBlank()
+    /** Only reject unknown calls when they will really land on the assistant (paired + forwarding set). */
+    val assistantActive: Boolean get() = assistantPaired && forwardingConfirmed && sendUnknownToAssistant
 }
 
 /** Settings persisted encrypted (they contain a caregiver's phone number). */
@@ -42,9 +56,19 @@ class SettingsRepository(private val store: BlobStore) {
     private val _settings = MutableStateFlow(AppSettings())
     val settings: StateFlow<AppSettings> = _settings.asStateFlow()
     private val mutex = Mutex()
+    @Volatile private var loaded = false
 
     suspend fun load() = withContext(Dispatchers.IO) {
-        mutex.withLock { _settings.value = store.read()?.let(::decode) ?: AppSettings() }
+        mutex.withLock {
+            _settings.value = store.read()?.let(::decode) ?: AppSettings()
+            loaded = true
+        }
+    }
+
+    /** For background entry points (call screening) that may run before the UI started. */
+    suspend fun ensureLoaded(): AppSettings {
+        if (!loaded) load()
+        return _settings.value
     }
 
     suspend fun update(transform: (AppSettings) -> AppSettings) = withContext(Dispatchers.IO) {
@@ -63,6 +87,14 @@ class SettingsRepository(private val store: BlobStore) {
         .put("saveHistory", s.saveHistory)
         .put("customBlockWords", JSONArray(s.customBlockWords))
         .put("blockedNumbers", JSONArray(s.blockedNumbers))
+        .put("callWarnings", s.callWarnings)
+        .put("blockInternational", s.blockInternational)
+        .put("assistantServer", s.assistantServer)
+        .put("assistantToken", s.assistantToken)
+        .put("assistantNumber", s.assistantNumber)
+        .put("assistantName", s.assistantName)
+        .put("forwardingConfirmed", s.forwardingConfirmed)
+        .put("sendUnknownToAssistant", s.sendUnknownToAssistant)
         .toString()
 
     private fun decode(json: String): AppSettings? = runCatching {
@@ -75,6 +107,14 @@ class SettingsRepository(private val store: BlobStore) {
             saveHistory = o.optBoolean("saveHistory", true),
             customBlockWords = o.optJSONArray("customBlockWords").toStringList(MAX_LIST),
             blockedNumbers = o.optJSONArray("blockedNumbers").toStringList(MAX_LIST),
+            callWarnings = o.optBoolean("callWarnings", true),
+            blockInternational = o.optBoolean("blockInternational", false),
+            assistantServer = o.optString("assistantServer").take(200),
+            assistantToken = o.optString("assistantToken").take(200),
+            assistantNumber = o.optString("assistantNumber").take(20),
+            assistantName = o.optString("assistantName").take(60),
+            forwardingConfirmed = o.optBoolean("forwardingConfirmed", false),
+            sendUnknownToAssistant = o.optBoolean("sendUnknownToAssistant", true),
         )
     }.getOrNull()
 

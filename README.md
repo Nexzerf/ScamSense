@@ -7,9 +7,9 @@
 | | |
 |---|---|
 | แพลตฟอร์ม | Android 6.0 (API 23) – Android 15 (API 35) • มือถือ/แท็บเล็ต • โหมดสว่าง/มืด |
-| ความเป็นส่วนตัว | ทำงานในเครื่อง 100% • **ไม่มีสิทธิ์ INTERNET** • ไม่ขอ permission ใด ๆ |
+| ความเป็นส่วนตัว | ตรวจข้อความ/ลิงก์/เบอร์ในเครื่อง 100% • อินเทอร์เน็ตใช้เฉพาะเมื่อจับคู่ผู้ช่วย AI รับสาย (HTTPS) |
 | ภาษา | ไทย (ฟอนต์ IBM Plex Sans Thai ฝังในแอป) |
-| ไฟล์ส่งมอบ | `dist/ScamSense-v1.0.0.apk` • `mockup/ScamSense-Mockup.html` |
+| ไฟล์ส่งมอบ | `dist/ScamSense-v1.1.0.apk` • `mockup/ScamSense-Mockup.html` • เซิร์ฟเวอร์ผู้ช่วย AI: `server/` |
 
 ## ฟีเจอร์
 
@@ -22,6 +22,8 @@
 - **ตรวจก่อนโอนเงิน** — แบบถามตอบสั้น ๆ (บัญชีปลอดภัย, อ้างเจ้าหน้าที่, จ่ายค่าธรรมเนียมก่อน ฯลฯ)
 - **แจ้งเตือนผู้ดูแล** (SMS ที่เติมข้อความให้แล้ว), **โทร 1441**, **ส่งต่อทาง LINE**, **ฟังผลเป็นเสียง (TTS)**
 - **แชร์จากแอปอื่น / เลือกข้อความ → "ตรวจด้วย ScamSense"** ตรวจอัตโนมัติทันที
+- **ป้องกันสายโทร (Android 10+)** — กรองสายจากเบอร์ที่ไม่อยู่ในรายชื่อก่อนเครื่องดัง: บล็อก +697/+698 / เบอร์ที่รายงาน / (ต่างประเทศ ถ้าเปิด) และแจ้งเตือน
+- **ผู้ช่วย AI รับสายแทน** — สายเบอร์แปลกถูกโอนให้ผู้ช่วยรับ → ถอดเสียงเป็นข้อความ → ตรวจด้วยเอนจินเดียวกัน → **วางสายมิจฉาชีพให้อัตโนมัติ + SMS เตือนลูกหลาน** หรือโอนสายที่ปลอดภัยเข้ามาพร้อมสรุปให้ฟัง ([รายละเอียด](docs/CALL_ASSISTANT.md))
 - ประวัติการตรวจแบบเข้ารหัส, ปรับขนาดตัวอักษร 3 ระดับ, ธีมมืด, หน้าโหลดแบรนด์ลื่นไหล
 
 ## Build
@@ -30,9 +32,10 @@
 
 ```bash
 echo "sdk.dir=/path/to/Android/sdk" > local.properties
-./gradlew testDebugUnitTest      # 66 tests: engine + UI render + end-to-end flow (Robolectric)
+./gradlew :core:test :server:test :app:testDebugUnitTest   # 94 tests: engine, call guard, server, UI render, flows
 ./gradlew lintRelease            # Android Lint (abortOnError)
-./gradlew assembleRelease        # R8-minified APK -> app/build/outputs/apk/release/
+./gradlew :app:assembleRelease   # R8-minified APK -> app/build/outputs/apk/release/
+./gradlew :server:fatJar         # AI call assistant -> server/build/libs/scamsense-server.jar
 ```
 
 **Release signing:** สร้าง `keystore.properties` (ไม่ถูก commit) ที่ root:
@@ -44,7 +47,7 @@ keyPassword=...
 ```
 หากไม่มีไฟล์นี้ release build จะเซ็นด้วย debug key เพื่อให้ติดตั้งทดสอบได้ — **ห้ามนำไฟล์ที่เซ็นด้วย debug key ขึ้น Google Play**
 
-รายละเอียดสถาปัตยกรรม: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) • ความปลอดภัย: [docs/SECURITY.md](docs/SECURITY.md)
+รายละเอียดสถาปัตยกรรม: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) • ความปลอดภัย: [docs/SECURITY.md](docs/SECURITY.md) • ผู้ช่วยรับสาย: [docs/CALL_ASSISTANT.md](docs/CALL_ASSISTANT.md)
 
 > ScamSense เป็นเครื่องมือช่วยประเมินเบื้องต้น ไม่สามารถรับประกันได้ 100% — หากสงสัยให้ปรึกษาคนที่ไว้ใจหรือโทรสายด่วน 1441 เสมอ
 
@@ -55,3 +58,5 @@ keyPassword=...
 | ![](docs/screenshots/01_loading.png) | ![](docs/screenshots/02_home.png) | ![](docs/screenshots/03_check_message.png) | ![](docs/screenshots/05_result_danger.png) |
 | **Result: safe** | **Transfer check** | **History** | **Settings** |
 | ![](docs/screenshots/07_result_safe.png) | ![](docs/screenshots/08_transaction.png) | ![](docs/screenshots/09_history.png) | ![](docs/screenshots/10_settings.png) |
+| **Call guard** | **AI assistant paired** | **AI call log** | |
+| ![](docs/screenshots/12_call_guard.png) | ![](docs/screenshots/12b_call_guard_paired.png) | ![](docs/screenshots/13_call_log.png) | |

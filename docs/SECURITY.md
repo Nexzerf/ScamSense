@@ -2,7 +2,7 @@
 
 | Area | Control |
 |---|---|
-| Permissions | **None** requested. No `INTERNET`, `READ_SMS`, `RECORD_AUDIO`, `SEND_SMS`, `CALL_PHONE`. |
+| Permissions | Only `INTERNET` (used solely after pairing with the user's own call-assistant server) and `POST_NOTIFICATIONS`. No `READ_SMS`, `READ_CONTACTS`, `READ_PHONE_STATE`, `RECORD_AUDIO`, `SEND_SMS`, `CALL_PHONE`. Call screening uses the system role (number only, never audio). |
 | Data at rest | History & settings encrypted with AES-256-GCM; key generated in **Android Keystore** (hardware-backed where available, non-exportable). Stored in `noBackupFilesDir`, written atomically (`AtomicFile`). Corrupt/undecryptable data is discarded, never crashes the app. |
 | Backup / transfer | `allowBackup=false`, `fullBackupContent` + `dataExtractionRules` exclude every domain (cloud + device-to-device). |
 | Data minimisation | Stored/shared previews mask digit runs ≥ 6 (account/ID/phone numbers keep only the last 3 digits). History can be disabled or wiped. |
@@ -10,7 +10,8 @@
 | Task hijacking (StrandHogg) | `taskAffinity=""` on the activity. |
 | Links in checked content | Never rendered as clickable; never fetched or opened. |
 | Outbound actions | SMS/dial/share open the user's own apps with pre-filled content; the user confirms. |
-| Network | `usesCleartextTraffic=false` (defence in depth; the app has no network permission at all). |
+| Network | HTTPS only (`networkSecurityConfig`: cleartext off, **system CAs only** — user-installed CAs rejected). Server URL validated and rebuilt from parts; responses size-capped; no redirects followed. |
+| Call-assistant server | See [CALL_ASSISTANT.md](CALL_ASSISTANT.md#ความปลอดภัยและ-pdpa): Twilio HMAC signature validation (fail closed), TwiML escaping, hashed device tokens, single-use pairing codes + rate limit, parameterised SQL, masked transcripts, retention purge, admin API disabled without token. |
 | DoS / ReDoS | All parsing is linear-time hand-written scanning; fuzzy matching window bounded; input capped. Pathological-input test asserts < 2 s. |
 | Release hardening | R8 obfuscation/minification, `debuggable=false`, verbose `Log` calls stripped, source file names hidden, no dependency-info blob, signing keys git-ignored (`*.jks`, `keystore.properties`). |
 | Supply chain | Only AndroidX/Jetpack + Kotlin stdlib from Google Maven / Maven Central. Font: IBM Plex Sans Thai (SIL OFL, licence in `licenses/`). |
@@ -18,4 +19,5 @@
 ## Known limitations / next steps
 - Detection is heuristic; new scam scripts need knowledge-base updates (ship via app update, or add an opt-in signed rule feed).
 - No real-time SMS interception (would require `RECEIVE_SMS`/notification access, which Google Play restricts); the share/process-text flow covers this without permissions.
+- Calls the user answers directly cannot be analysed (Android blocks call-audio capture for third-party apps); the assistant screens calls before they are answered.
 - Consider a TFLite multilingual sentence encoder behind `ScamAnalyzer` for deeper semantic matching.

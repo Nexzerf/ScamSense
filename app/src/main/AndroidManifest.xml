@@ -3,11 +3,17 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <!--
-        Privacy by design: ScamSense requests NO permissions at all.
-        - No INTERNET: analysis is 100% on-device; checked messages never leave the phone.
+        Privacy by design — minimal permissions:
+        - Message/link/phone analysis is 100% on-device; checked text never leaves the phone.
+        - INTERNET is used ONLY to talk to the user's own AI call-assistant server after they
+          pair with it (HTTPS only). Nothing is sent if the assistant is not set up.
+        - POST_NOTIFICATIONS: warnings about blocked / suspicious calls.
+        - Call screening uses the system "call screening" role (number only, never audio).
         - Speech input uses the system recogniser via an Intent (no RECORD_AUDIO).
-        - SMS / calls to the caregiver open the user's own apps (no SEND_SMS / CALL_PHONE).
+        - SMS / calls / call-forwarding codes open the user's own apps (no SEND_SMS / CALL_PHONE).
     -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <!-- Android 11+ package visibility: needed to bind the system text-to-speech engine
          and to launch the system speech recogniser. -->
@@ -30,6 +36,7 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:usesCleartextTraffic="false"
+        android:networkSecurityConfig="@xml/network_security_config"
         android:localeConfig="@xml/locales_config"
         android:enableOnBackInvokedCallback="true"
         android:theme="@style/Theme.ScamSense"
@@ -62,5 +69,14 @@
                 <data android:mimeType="text/plain" />
             </intent-filter>
         </activity>
+
+        <service
+            android:name=".calls.ScamCallScreeningService"
+            android:exported="true"
+            android:permission="android.permission.BIND_SCREENING_SERVICE">
+            <intent-filter>
+                <action android:name="android.telecom.CallScreeningService" />
+            </intent-filter>
+        </service>
     </application>
 </manifest>

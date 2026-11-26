@@ -48,8 +48,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.scamsense.app.engine.TransactionInput
-import com.scamsense.app.engine.TransactionSituation
+import com.scamsense.core.engine.TransactionInput
+import com.scamsense.core.engine.TransactionSituation
 import com.scamsense.app.ui.components.AnalyzingIndicator
 import com.scamsense.app.ui.components.BigButton
 import com.scamsense.app.ui.components.SectionTitle

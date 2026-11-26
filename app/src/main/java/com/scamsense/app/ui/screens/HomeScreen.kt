@@ -26,6 +26,7 @@ import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.Payments
 import androidx.compose.material.icons.rounded.PhoneInTalk
+import androidx.compose.material.icons.rounded.PhoneLocked
 import androidx.compose.material.icons.rounded.Sms
 import androidx.compose.material.icons.rounded.SupportAgent
 import androidx.compose.material3.Button
@@ -48,9 +49,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.scamsense.app.data.AppSettings
-import com.scamsense.app.engine.CheckType
-import com.scamsense.app.engine.RiskLevel
-import com.scamsense.app.engine.RiskResult
+import com.scamsense.core.engine.CheckType
+import com.scamsense.core.engine.RiskLevel
+import com.scamsense.core.engine.RiskResult
 import com.scamsense.app.ui.components.ActionTile
 import com.scamsense.app.ui.components.BrandShield
 import com.scamsense.app.ui.components.SectionTitle
@@ -78,6 +79,7 @@ fun HomeScreen(
     onCallCaregiver: () -> Unit,
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
+    onOpenCallGuard: () -> Unit = {},
 ) {
     val greeting = remember {
         when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) {
@@ -123,6 +125,8 @@ fun HomeScreen(
             ActionTile("การโอนเงิน", "ก่อนกดโอน ตรวจก่อน", Icons.Rounded.Payments, Color(0xFFB45309),
                 onTransaction, Modifier.weight(1f))
         }
+
+        CallGuardCard(settings, onOpenCallGuard)
 
         CaregiverCard(settings, onCallCaregiver, onOpenSettings)
 
@@ -228,6 +232,40 @@ private fun CaregiverCard(settings: AppSettings, onCall: () -> Unit, onSetup: ()
                 if (settings.hasCaregiver) Icons.Rounded.Call else Icons.AutoMirrored.Rounded.ArrowForward,
                 null, tint = MaterialTheme.colorScheme.primary,
             )
+        }
+    }
+}
+
+@Composable
+private fun CallGuardCard(settings: AppSettings, onOpen: () -> Unit) {
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val screening = remember { isCallScreeningEnabled(context) }
+    val on = screening || settings.assistantPaired
+    val c = riskColors(if (on) RiskLevel.SAFE else RiskLevel.SUSPICIOUS)
+    Card(
+        onClick = onOpen,
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+    ) {
+        Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(52.dp).clip(CircleShape).background(c.container), contentAlignment = Alignment.Center) {
+                Icon(Icons.Rounded.PhoneLocked, null, tint = c.main, modifier = Modifier.size(28.dp))
+            }
+            Spacer(Modifier.width(14.dp))
+            Column(Modifier.weight(1f)) {
+                Text("ป้องกันสายโทร", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    when {
+                        settings.assistantActive -> "เปิดอยู่ • ผู้ช่วย AI รับสายเบอร์แปลกให้ก่อน"
+                        screening -> "เปิดอยู่ • บล็อกเบอร์อันตรายให้อัตโนมัติ"
+                        else -> "ยังไม่เปิด • แตะเพื่อเปิดการกรองสายและผู้ช่วย AI"
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (on) c.main else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, tint = MaterialTheme.colorScheme.primary)
         }
     }
 }

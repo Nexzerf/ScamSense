@@ -43,8 +43,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.scamsense.app.engine.CheckType
-import com.scamsense.app.engine.RiskResult
+import com.scamsense.core.engine.CheckType
+import com.scamsense.core.engine.RiskResult
 import com.scamsense.app.ui.components.LevelBadge
 import com.scamsense.app.ui.components.SectionTitle
 import com.scamsense.app.ui.theme.label

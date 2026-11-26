@@ -5,7 +5,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
-import com.scamsense.app.engine.RiskLevel
+import com.scamsense.core.engine.RiskLevel
 
 // Brand — a calm, trustworthy blue. All text/background pairs meet WCAG AA (most AAA).
 val Brand = Color(0xFF1E4FD8)
