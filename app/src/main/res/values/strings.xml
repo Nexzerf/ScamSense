@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name" translatable="false">ScamSense</string>
+    <string name="share_label">ตรวจด้วย ScamSense</string>
+    <string name="process_text_label">ตรวจด้วย ScamSense</string>
+</resources>

@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ScamSense — UI Mockup</title>
+<style>
+@font-face{font-family:"Plex Thai";font-weight:400;src:url(data:font/ttf;base64,{{FONT_REGULAR}}) format("truetype")}
+@font-face{font-family:"Plex Thai";font-weight:600;src:url(data:font/ttf;base64,{{FONT_SEMIBOLD}}) format("truetype")}
+@font-face{font-family:"Plex Thai";font-weight:700;src:url(data:font/ttf;base64,{{FONT_BOLD}}) format("truetype")}
+:root{
+  --brand:#1E4FD8;--brand-deep:#1638A8;--bg:#F4F6FB;--surface:#fff;--ink:#0F172A;--muted:#475569;--line:#E6EAF2;
+  --safe:#15803D;--safe-c:#DCFCE7;--warn:#B45309;--warn-c:#FEF3C7;--danger:#C81E1E;--danger-c:#FEE2E2;
+  --pc:#DCE6FF;--sc:#D5F3FA;--on-sc:#083344;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Plex Thai",system-ui,sans-serif;background:#E9EDF5;color:var(--ink);line-height:1.55}
+header.page{background:linear-gradient(135deg,var(--brand),var(--brand-deep));color:#fff;padding:40px 24px 56px;text-align:center}
+header.page h1{font-size:34px;font-weight:700}
+header.page p{opacity:.9;font-size:17px;max-width:720px;margin:6px auto 0}
+.pills{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:18px}
+.pills span{background:rgba(255,255,255,.16);padding:6px 14px;border-radius:99px;font-size:14px}
+main{max-width:1280px;margin:-32px auto 0;padding:0 20px 60px}
+section.block{background:#fff;border-radius:28px;padding:28px;margin-bottom:28px;box-shadow:0 10px 30px rgba(15,23,42,.06)}
+section.block>h2{font-size:24px;margin-bottom:4px}
+section.block>p.lead{color:var(--muted);margin-bottom:20px}
+.proto{display:flex;gap:32px;flex-wrap:wrap;align-items:flex-start;justify-content:center}
+.proto aside{flex:1;min-width:260px;max-width:420px}
+.proto aside h3{font-size:18px;margin:14px 0 6px}
+.proto aside li{margin-left:20px;color:var(--muted)}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:28px;justify-items:center}
+.gallery figure{text-align:center}
+.gallery figcaption{margin-top:10px;font-weight:600;color:var(--muted)}
+
+/* ---------- phone frame ---------- */
+.phone{width:300px;height:640px;border-radius:44px;background:#0B1220;padding:10px;box-shadow:0 20px 50px rgba(15,23,42,.25);position:relative;flex:none}
+.phone.big{width:360px;height:760px}
+.screen{width:100%;height:100%;border-radius:36px;overflow:hidden;background:var(--bg);position:relative;display:flex;flex-direction:column;font-size:13.5px}
+.phone.big .screen{font-size:15px}
+.status{height:28px;display:flex;justify-content:space-between;align-items:center;padding:0 22px;font-size:11px;font-weight:600;flex:none}
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;scrollbar-width:none}
+.scroll::-webkit-scrollbar{display:none}
+.pad{padding:0 16px 16px}
+.topbar{display:flex;align-items:center;gap:8px;padding:6px 14px 10px;font-weight:600;font-size:1.15em}
+.topbar .logo{width:26px;height:26px;border-radius:50%;background:var(--brand);display:grid;place-items:center}
+.topbar.center{justify-content:center}
+.back{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;cursor:pointer;font-size:1.3em}
+.navbar{height:62px;background:#fff;border-top:1px solid var(--line);display:flex;flex:none}
+.navbar button{flex:1;border:0;background:none;font:inherit;font-size:.82em;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer}
+.navbar button .ic{width:50px;height:26px;border-radius:99px;display:grid;place-items:center}
+.navbar button.on{color:var(--ink);font-weight:600}
+.navbar button.on .ic{background:var(--pc)}
+h4.greet{color:var(--muted);font-weight:600;font-size:1em}
+h3.title{font-size:1.55em;font-weight:700;line-height:1.35;margin-bottom:12px}
+.hero{background:linear-gradient(135deg,var(--brand),var(--brand-deep));border-radius:22px;padding:16px;color:#fff;display:flex;flex-direction:column;gap:10px}
+.hero .row{display:flex;gap:10px;align-items:center}
+.hero .badge{width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.16);display:grid;place-items:center;flex:none}
+.btn{border:0;border-radius:16px;min-height:48px;font:inherit;font-weight:600;font-size:1.05em;display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;width:100%;padding:8px 12px}
+.btn.white{background:#fff;color:var(--brand)}
+.btn.ghost{background:transparent;color:#fff;border:1.5px solid rgba(255,255,255,.6)}
+.btn.primary{background:var(--brand);color:#fff}
+.btn.tonal{background:var(--pc);color:#0A2472}
+.btn.outline{background:#fff;border:1.5px solid currentColor}
+.sec{font-weight:600;font-size:1.15em;margin:16px 0 10px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tile{background:#fff;border:1px solid var(--line);border-radius:20px;padding:13px;cursor:pointer;transition:transform .15s}
+.tile:hover{transform:translateY(-2px)}
+.tile .ib{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;margin-bottom:6px}
+.tile b{display:block;font-size:1.08em}
+.tile small{color:var(--muted)}
+.card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:13px;margin-top:10px;display:flex;gap:10px;align-items:center}
+.card .av{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;flex:none}
+.card .grow{flex:1}
+.card small{color:var(--muted);display:block}
+.card.red{background:var(--danger-c);border:0;color:#7F1D1D}
+.card.tip{background:var(--sc);border:0;color:var(--on-sc);align-items:flex-start}
+textarea,input.field{width:100%;border:1.5px solid #D5DBE7;border-radius:16px;padding:12px;font:inherit;font-size:1.05em;background:#fff;resize:none;color:var(--ink)}
+textarea:focus,input.field:focus{outline:none;border-color:var(--brand)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid #D5DBE7;background:#fff;border-radius:12px;padding:6px 10px;font:inherit;font-size:.88em;cursor:pointer}
+.muted{color:var(--muted)}
+.vhead{color:#fff;padding:6px 0 18px;border-radius:0 0 30px 30px;text-align:center}
+.vhead .topbar{color:#fff;justify-content:space-between}
+.gauge{position:relative;width:150px;height:124px;margin:0 auto}
+.gauge svg{position:absolute;top:0;left:0}
+.gauge .num{position:absolute;top:34px;left:0;right:0;text-align:center;font-size:2.7em;font-weight:700;line-height:1.1}
+.gauge .of{position:absolute;top:88px;left:0;right:0;text-align:center;font-size:.85em;opacity:.85}
+.level{font-size:1.8em;font-weight:700}
+.stop{display:inline-flex;gap:6px;align-items:center;background:rgba(255,255,255,.16);border-radius:14px;padding:6px 12px;font-weight:700;margin:2px 0 8px;animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{50%{transform:scale(1.04)}}
+.kind{display:inline-block;background:rgba(255,255,255,.18);border-radius:99px;padding:3px 12px;font-weight:600;font-size:.9em;margin-top:6px}
+.reason{display:flex;gap:10px;padding:8px 0}
+.reason .dot{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;flex:none;font-size:.95em}
+.reason b{display:block;font-size:.98em}
+.reason small{color:var(--muted);display:block;line-height:1.45}
+.ev{display:inline-block;background:#EDF1F8;border-radius:8px;padding:1px 8px;font-size:.82em;margin-top:3px;color:var(--muted)}
+.whitecard{background:#fff;border:1px solid var(--line);border-radius:20px;padding:12px 14px}
+.loading{background:linear-gradient(180deg,var(--brand),var(--brand-deep));color:#fff;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px}
+.rings{width:150px;height:150px;position:relative;display:grid;place-items:center}
+.rings i{position:absolute;inset:0;border-radius:50%;background:rgba(255,255,255,.2);animation:ring 2.4s linear infinite}
+.rings i:nth-child(2){animation-delay:.8s}.rings i:nth-child(3){animation-delay:1.6s}
+@keyframes ring{0%{transform:scale(.45);opacity:1}100%{transform:scale(1);opacity:0}}
+.rings .core{width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,.14);display:grid;place-items:center;animation:breathe 1.8s ease-in-out infinite}
+@keyframes breathe{50%{transform:scale(1.05)}}
+.bar{width:70%;height:7px;border-radius:7px;background:rgba(255,255,255,.25);overflow:hidden;margin-top:auto}
+.bar span{display:block;height:100%;background:#fff;border-radius:7px;width:0;animation:load 1.4s ease-out forwards}
+@keyframes load{to{width:100%}}
+.spin{width:110px;height:110px;border-radius:50%;border:5px solid var(--pc);border-top-color:var(--brand);animation:sp 1s linear infinite;display:grid;place-items:center;margin:0 auto}
+@keyframes sp{to{transform:rotate(360deg)}}
+.check-row{display:flex;gap:10px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:16px;padding:10px 12px;margin-bottom:8px;cursor:pointer}
+.check-row.on{background:var(--pc);border-color:var(--brand)}
+.box{width:20px;height:20px;border-radius:5px;border:2px solid var(--muted);flex:none;display:grid;place-items:center;color:#fff;font-size:13px}
+.check-row.on .box{background:var(--brand);border-color:var(--brand)}
+.seg{display:flex;border:1.5px solid #D5DBE7;border-radius:99px;overflow:hidden}
+.seg span{flex:1;text-align:center;padding:8px 0;font-weight:600;font-size:.92em}
+.seg span.on{background:var(--pc);color:#0A2472}
+.hist{display:flex;gap:10px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:18px;padding:11px;margin-bottom:8px}
+.score{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:1.15em;flex:none}
+.lvl{border-radius:99px;padding:1px 9px;font-size:.78em;font-weight:600}
+.toggle{width:44px;height:26px;border-radius:99px;background:var(--brand);position:relative;flex:none}
+.toggle:after{content:"";position:absolute;right:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#fff}
+.ichip{display:inline-flex;gap:4px;align-items:center;border:1px solid #D5DBE7;border-radius:10px;padding:4px 10px;font-size:.88em;margin:3px}
+.arch{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.arch div{border:1px solid var(--line);border-radius:18px;padding:16px;background:#FAFBFE}
+.arch h4{font-size:16px;margin-bottom:6px;color:var(--brand)}
+.arch li{margin-left:18px;color:var(--muted);font-size:14px}
+.flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;margin:6px 0 18px}
+.flow span{background:var(--pc);color:#0A2472;border-radius:12px;padding:8px 12px;font-weight:600;font-size:14px}
+.flow em{color:var(--muted);font-style:normal}
+footer{text-align:center;color:var(--muted);font-size:14px;padding:10px}
+.ico{width:1.25em;height:1.25em;vertical-align:-.25em;fill:currentColor}
+</style>
+</head>
+<body>
+<header class="page">
+  <h1>ScamSense — UI Mockup</h1>
+  <p>แอปคัดกรองและแจ้งเตือนความเสี่ยงมิจฉาชีพ สำหรับผู้สูงอายุและครอบครัว (Android)</p>
+  <div class="pills"><span>ทำงานในเครื่อง 100%</span><span>ไม่ขอสิทธิ์ใด ๆ</span><span>ตัวอักษรใหญ่ อ่านง่าย</span><span>Android 6.0 – 15</span><span>สั่งด้วยเสียงได้</span></div>
+</header>
+<main>
+  <section class="block">
+    <h2>ลองใช้งานจริง (Interactive prototype)</h2>
+    <p class="lead">กดปุ่มในโทรศัพท์ได้เลย — ช่องตรวจข้อความใช้กฎตรวจจับชุดเดียวกับในแอป (ฉบับย่อ) ลองพิมพ์ข้อความเองหรือกดตัวอย่าง</p>
+    <div class="proto">
+      <div class="phone big"><div class="screen" id="live"></div></div>
+      <aside>
+        <h3>เส้นทางการใช้งานหลัก</h3>
+        <ol>
+          <li>เปิดแอป → หน้าโหลดแบรนด์ (เตรียมฐานข้อมูลกลโกง + เปิดข้อมูลเข้ารหัส)</li>
+          <li>หน้าหลัก → “กดแล้วพูดได้เลย” หรือเลือก ข้อความ / ลิงก์ / เบอร์โทร / การโอนเงิน</li>
+          <li>วาง พิมพ์ หรือพูด → “ตรวจสอบเลย”</li>
+          <li>ผลการตรวจ: คะแนน 0–100, ระดับสี, เหตุผลภาษาง่าย, สิ่งที่ควรทำ</li>
+          <li>ปุ่มแจ้งเตือนผู้ดูแล (SMS) • โทร 1441 • ส่งต่อให้ลูกหลาน • ฟังผลเป็นเสียง</li>
+        </ol>
+        <h3>แชร์จากแอปอื่นได้</h3>
+        <ul><li>ใน LINE/SMS กด “แชร์” → ScamSense ตรวจทันที</li><li>เลือกข้อความ → เมนู “ตรวจด้วย ScamSense”</li></ul>
+        <h3>ระดับความเสี่ยง</h3>
+        <ul><li><b style="color:var(--safe)">0–29 ความเสี่ยงต่ำ</b></li><li><b style="color:var(--warn)">30–59 น่าสงสัย</b></li><li><b style="color:var(--danger)">60–100 อันตราย</b> (บล็อก = ≥85 และขึ้นป้าย “หยุด!”)</li></ul>
+        <p style="margin-top:14px"><button class="btn primary" style="max-width:260px" onclick="go('loading')">เริ่มใหม่จากหน้าโหลด</button></p>
+      </aside>
+    </div>
+  </section>
+
+  <section class="block">
+    <h2>ทุกหน้าจอ</h2>
+    <p class="lead">ออกแบบตามหลักการเข้าถึงง่าย: ตัวอักษรพื้นฐาน 18sp, ปุ่มสูง ≥ 56–64dp, ไอคอนมีข้อความกำกับเสมอ, สีตัดกันผ่านมาตรฐาน WCAG AA</p>
+    <div class="gallery" id="gallery"></div>
+  </section>
+
+  <section class="block">
+    <h2>สถาปัตยกรรมระบบ</h2>
+    <p class="lead">Single-activity, Jetpack Compose + MVVM, เอนจินตรวจจับเป็น Kotlin ล้วน (ทดสอบได้ไม่ต้องใช้มือถือ)</p>
+    <div class="flow"><span>ข้อความ / เสียง / แชร์</span><em>→</em><span>Normalize (กันการเลี่ยงคำ)</span><em>→</em><span>Keyword + Fuzzy</span><em>+</em><span>Similarity (n-gram TF-IDF)</span><em>+</em><span>ลิงก์ / เบอร์</span><em>→</em><span>คะแนน + เหตุผล</span></div>
+    <div class="arch">
+      <div><h4>UI (Compose, Material 3)</h4><ul><li>Loading, Home, Check, Result</li><li>Transaction, History, Settings</li><li>ปรับขนาดตัวอักษร / ธีมมืด</li></ul></div>
+      <div><h4>ViewModel</h4><ul><li>StateFlow, งานหนักบน Dispatchers.Default</li><li>รับข้อความที่แชร์ (ตรวจความปลอดภัยก่อน)</li></ul></div>
+      <div><h4>Detection Engine</h4><ul><li>19 กลุ่มกฎ ~300 คำ + คำสะกดผิด 1 ตัว</li><li>เทียบความคล้าย 35 รูปแบบกลโกง</li><li>ตรวจลิงก์ปลอม / ลิงก์ย่อ / .apk / ตัวอักษรหลอกตา</li><li>เบอร์ต่างประเทศ / +697 / +698</li></ul></div>
+      <div><h4>Data (เข้ารหัส)</h4><ul><li>AES-256-GCM, กุญแจใน Android Keystore</li><li>ไม่สำรองข้อมูลขึ้นคลาวด์</li><li>ซ่อนเลขบัญชีในประวัติ</li></ul></div>
+    </div>
+  </section>
+  <footer>ScamSense mockup • ฟอนต์ IBM Plex Sans Thai (SIL OFL) • ข้อความตัวอย่างทั้งหมดสมมติขึ้น</footer>
+</main>
+
+<script>
+/* ---------------- icons (Material Symbols paths) ---------------- */
+const P={
+ mic:'M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2Z',
+ edit:'M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25ZM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83Z',
+ sms:'M20 2H4a2 2 0 0 0-2 2v18l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2ZM9 11H7V9h2v2Zm4 0h-2V9h2v2Zm4 0h-2V9h2v2Z',
+ link:'M3.9 12a3.1 3.1 0 0 1 3.1-3.1h4V7H7a5 5 0 0 0 0 10h4v-1.9H7A3.1 3.1 0 0 1 3.9 12ZM8 13h8v-2H8v2Zm9-6h-4v1.9h4a3.1 3.1 0 0 1 0 6.2h-4V17h4a5 5 0 0 0 0-10Z',
+ phone:'M6.62 10.79a15.05 15.05 0 0 0 6.59 6.59l2.2-2.2a1 1 0 0 1 1.02-.24c1.12.37 2.33.57 3.57.57a1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1.02l-2.2 2.2Z',
+ pay:'M19 14V6a2 2 0 0 0-2-2H3a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2Zm-9-1a3 3 0 1 1 0-6 3 3 0 0 1 0 6Zm13-6v11a2 2 0 0 1-2 2H4v-2h17V7h2Z',
+ home:'M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8h5Z',
+ hist:'M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6a7 7 0 1 1 2.05 4.95l-1.42 1.42A9 9 0 1 0 13 3Zm-1 5v5l4.25 2.52.77-1.28-3.52-2.09V8H12Z',
+ set:'M19.14 12.94a7.07 7.07 0 0 0 0-1.88l2.03-1.58a.5.5 0 0 0 .12-.64l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96a7 7 0 0 0-1.62-.94l-.36-2.54A.5.5 0 0 0 13.9 2h-3.84a.5.5 0 0 0-.49.42l-.36 2.54c-.59.24-1.13.56-1.62.94l-2.39-.96a.5.5 0 0 0-.61.22L2.67 8.48a.5.5 0 0 0 .12.64l2.03 1.58a7.07 7.07 0 0 0 0 1.88l-2.03 1.58a.5.5 0 0 0-.12.64l1.92 3.32c.13.22.39.3.61.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.25.42.49.42h3.84c.24 0 .44-.18.49-.42l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.48 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.64l-2.03-1.58ZM12 15.6a3.6 3.6 0 1 1 0-7.2 3.6 3.6 0 0 1 0 7.2Z',
+ family:'M16 4a2 2 0 1 1 0 4 2 2 0 0 1 0-4ZM4 18v-6H2.5V7.5A1.5 1.5 0 0 1 4 6h3a1.5 1.5 0 0 1 1.5 1.5V12H7v6H4Zm8.5-11.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3ZM5.5 6a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm2 12v-4H6V11a1 1 0 0 1 1-1h1v8H7.5Zm9.5 0v-6h2.5l-2.54-7.63A2 2 0 0 0 15.06 3h-.12a2 2 0 0 0-1.9 1.37L10.5 12H13v6h4Z',
+ call:'M20 15.5c-1.25 0-2.45-.2-3.57-.57a1 1 0 0 0-1.02.24l-2.2 2.2a15.05 15.05 0 0 1-6.59-6.59l2.2-2.2a1 1 0 0 0 .25-1.02A11.4 11.4 0 0 1 8.5 4a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1 17 17 0 0 0 17 17 1 1 0 0 0 1-1v-3.5a1 1 0 0 0-1-1Z',
+ bulb:'M9 21a1 1 0 0 0 1 1h4a1 1 0 0 0 1-1v-1H9v1Zm3-19a7 7 0 0 0-4 12.74V17a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-2.26A7 7 0 0 0 12 2Z',
+ back:'M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2Z',
+ close:'M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z',
+ block:'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20ZM4 12a8 8 0 0 1 12.9-6.32L5.68 16.9A7.9 7.9 0 0 1 4 12Zm8 8a7.9 7.9 0 0 1-4.9-1.68L18.32 7.1A8 8 0 0 1 12 20Z',
+ share:'M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7a3.3 3.3 0 0 0 0-1.39l7.05-4.11A3 3 0 1 0 15 5c0 .24.04.47.09.7L8.04 9.81a3 3 0 1 0 0 4.38l7.12 4.16c-.05.21-.08.43-.08.65A2.92 2.92 0 1 0 18 16.08Z',
+ play:'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm-2 14.5v-9l6 4.5-6 4.5Z',
+ paste:'M19 2h-4.18A3 3 0 0 0 12 0a3 3 0 0 0-2.82 2H5a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2Zm-7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2Zm7 18H5V4h2v3h10V4h2v16Z',
+ search:'M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5Zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14Z',
+ ok:'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9Z',
+ warn:'M1 21h22L12 2 1 21Zm12-3h-2v-2h2v2Zm0-4h-2v-4h2v4Z',
+ key:'M12.65 10A6 6 0 1 0 7 18a6 6 0 0 0 5.65-4H17v4h4v-4h2v-4H12.65ZM7 14a2 2 0 1 1 0-4 2 2 0 0 1 0 4Z',
+ lock:'M18 8h-1V6A5 5 0 0 0 7 6v2H6a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10a2 2 0 0 0-2-2Zm-6 9a2 2 0 1 1 0-4 2 2 0 0 1 0 4Zm3.1-9H8.9V6a3.1 3.1 0 0 1 6.2 0v2Z',
+ info:'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm1 15h-2v-6h2v6Zm0-8h-2V7h2v2Z',
+ gavel:'M1 21h12v2H1v-2ZM5.24 8.07l2.83-2.83 14.14 14.14-2.83 2.83L5.24 8.07ZM12.32 1l5.66 5.66-2.83 2.83-5.66-5.66L12.32 1ZM3.83 9.48l5.66 5.66-2.83 2.83L1 12.31l2.83-2.83Z',
+ clock:'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm4.2 14.2L11 13V7h1.5v5.2l4.5 2.7-.8 1.3Z',
+ person:'M10 4a4 4 0 1 1 0 8 4 4 0 0 1 0-8Zm0 10c4.42 0 8 1.79 8 4v2H2v-2c0-2.21 3.58-4 8-4Zm9.5-3.5 1.5 1.5-3.5 3.5L15 13l1.5-1.5 1 1 2-2Z',
+ add:'M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2Z'
+};
+const ic=(n,c='currentColor',s='1.25em')=>`<svg class="ico" viewBox="0 0 24 24" style="width:${s};height:${s};fill:${c}"><path d="${P[n]}"/></svg>`;
+const shield=(c='#fff',k='#1E4FD8',s=30)=>`<svg width="${s}" height="${s}" viewBox="0 0 48 48"><path fill="${c}" d="M24 2 42 8.8V21.8C42 33 34.5 42.4 24 45.5 13.5 42.4 6 33 6 21.8V8.8Z"/><path fill="none" stroke="${k}" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round" d="M15.5 24 21.8 30.3 33 18.2"/></svg>`;
+
+/* ---------------- mini detection engine (subset of the app's rules) ---------------- */
+const RULES=[
+ ['credentials',30,'SENSITIVE','ขอรหัสลับ เช่น OTP หรือรหัสผ่าน','ธนาคารจริงจะไม่ขอรหัส OTP หรือรหัสผ่านจากคุณ',['otp','รหัสotp','รหัสยืนยัน','รหัสผ่าน','password','pin','cvv','เลขหลังบัตร']],
+ ['identity',22,'SENSITIVE','ขอข้อมูลส่วนตัวหรือเลขบัญชี','อาจถูกนำไปเปิดบัญชีม้าหรือขโมยเงิน',['บัญชีธนาคาร','เลขบัญชี','บชธนาคาร','บัตรประชาชน','ข้อมูลส่วนตัว','ข้อมูลส่วนบุคคล']],
+ ['urgency',15,'URGENCY','เร่งรีบ หรือขู่ว่าจะระงับบัญชี','มิจฉาชีพมักเร่งให้รีบทำ เพื่อไม่ให้มีเวลาคิด',['ด่วน','ทันที','ภายใน24ชั่วโมง','ภายในวันนี้','ระงับ','อายัด','มิฉะนั้น']],
+ ['authority',15,'IMPERSONATION','อ้างเป็นตำรวจหรือหน่วยงานรัฐ','หน่วยงานรัฐไม่ส่งข้อความมาให้โอนเงิน',['ตำรวจ','ดีเอสไอ','dsi','ปปง','สรรพากร','การไฟฟ้า','ศุลกากร','ประกันสังคม']],
+ ['delivery',6,'IMPERSONATION','อ้างเรื่องพัสดุหรือบริษัทขนส่ง','ข้อความพัสดุค้างส่งที่ให้กดลิงก์ เป็นกลโกงที่พบบ่อย',['พัสดุ','ไปรษณีย์','ขนส่ง']],
+ ['money',15,'MONEY','ให้โอนเงินหรือจ่ายค่าธรรมเนียม','การให้จ่ายเงินก่อน เป็นสัญญาณกลโกงที่ชัดเจน',['โอนเงิน','ค่าธรรมเนียม','มัดจำ','ค่าดำเนินการ']],
+ ['prize',20,'MONEY','อ้างว่าได้รางวัลหรือเงินคืน','ถ้าไม่ได้ร่วมกิจกรรม มักเป็นกลโกง',['ได้รับรางวัล','ถูกรางวัล','เงินคืน','คืนภาษี','เงินช่วยเหลือ']],
+ ['loan',15,'MONEY','เสนอเงินกู้อนุมัติง่ายผิดปกติ','เงินกู้จริงไม่เก็บเงินก่อนอนุมัติ',['เงินกู้','สินเชื่อ','อนุมัติไว','ไม่ต้องค้ำ']],
+ ['invest',20,'MONEY','ชวนลงทุน อ้างผลตอบแทนสูง','ไม่มีการลงทุนใดการันตีกำไรสูงได้จริง',['ผลตอบแทน','กำไรต่อวัน','การันตี','คริปโต','ปันผล']],
+ ['threat',25,'THREAT','ขู่ว่าพัวพันคดี','ตำรวจจริงไม่โทรมาข่มขู่ให้โอนเงิน',['พัวพัน','คดี','ฟอกเงิน','หมายจับ','ดำเนินคดี','บัญชีม้า']],
+ ['link',12,'ACTION','ให้กดลิงก์ แอดไลน์ หรือกรอกข้อมูล','ลิงก์อาจพาไปเว็บปลอมเพื่อขโมยข้อมูล',['คลิก','กดลิงก์','ที่ลิงก์','แอดไลน์','ทักไลน์','ยืนยันตัวตน','อัปเดต','กรอกข้อมูล']],
+ ['install',25,'ACTION','ให้ติดตั้งแอปจากลิงก์','แอปที่ส่งมาทางแชทอาจเป็นแอปดูดเงิน',['ติดตั้งแอป','ดาวน์โหลดแอป','apk']],
+ ['remote',40,'REMOTE','ขอควบคุมเครื่องหรือแชร์หน้าจอ','มิจฉาชีพจะเห็นทุกอย่างบนจอและโอนเงินออกได้',['anydesk','teamviewer','แชร์หน้าจอ','การช่วยเหลือพิเศษ']],
+ ['secrecy',25,'SECRECY','บอกให้เก็บเป็นความลับ หรือห้ามวางสาย','เป็นวิธีตัดคุณจากคนที่จะช่วยเตือน',['ห้ามบอกใคร','เป็นความลับ','ห้ามวางสาย','อย่าวางสาย','อย่าเพิ่งบอก']],
+ ['safeacc',40,'MONEY','ให้โอนเงินไป "บัญชีปลอดภัย"','ไม่มีหน่วยงานใดให้โอนเงินไปตรวจสอบ',['บัญชีปลอดภัย','ตรวจสอบเงิน','ตรวจสอบเส้นทางการเงิน']],
+];
+const compact=s=>s.normalize('NFKC').toLowerCase().replace(/[​-‏﻿]/g,'').replace(/[๐-๙]/g,d=>'0123456789'['๐๑๒๓๔๕๖๗๘๙'.indexOf(d)]).replace(/เเ/g,'แ').replace(/[^ก-๛a-z0-9]/g,'');
+function analyze(text){
+  const c=compact(text);const hits=[];let block=false;
+  for(const [id,w,cat,t,d,terms] of RULES){const m=terms.find(x=>c.includes(compact(x)));if(m)hits.push({id,w,cat,t,d,ev:`พบคำว่า "${m}"`});}
+  const urls=(text.match(/(https?:\/\/|www\.)?[a-z0-9-]+(\.[a-z0-9-]+)*\.(com|net|org|xyz|top|online|site|ly|me|th|link|click|vip|shop)(\/[^\s฀-๿]*)?/gi)||[]);
+  for(const u of urls){const h=u.toLowerCase().replace(/^https?:\/\//,'').split(/[\/?#]/)[0];
+    if(/bit\.ly|tinyurl|cutt\.ly|shorturl/.test(h))hits.push({w:30,cat:'LINK',t:'ลิงก์ย่อ ซ่อนปลายทางจริง',d:'มองไม่เห็นว่าจะพาไปเว็บไหน',ev:u});
+    const tld=h.split('.').pop();if(['xyz','top','online','site','link','click','vip','shop'].includes(tld))hits.push({w:15,cat:'LINK',t:`นามสกุลเว็บ .${tld} พบบ่อยในเว็บหลอกลวง`,d:'หน่วยงานจริงมักใช้ .co.th .go.th',ev:u});
+    const brand=['kbank','scb','krungthai','ktb','krungsri','thaipost','kerry','pea'].find(b=>h.split(/[.-]/).includes(b));
+    const official=/kasikornbank\.com$|scb\.co\.th$|krungthai\.com$|thailandpost\.co\.th$/.test(h);
+    if(brand&&!official){hits.push({w:45,cat:'LINK',t:`ชื่อเว็บปลอมเป็น "${brand}"`,d:'ไม่ใช่เว็บทางการ',ev:u});block=true;}
+    if(/\.apk/i.test(u)){hits.push({w:50,cat:'LINK',t:'ลิงก์ดาวน์โหลดแอปนอก Play Store',d:'ห้ามติดตั้งเด็ดขาด',ev:u});block=true;}
+  }
+  const ids=new Set(hits.map(h=>h.id));
+  if(ids.has('credentials')&&(['link','urgency','authority','money','threat','install'].some(x=>ids.has(x))||urls.length)){hits.push({w:20,cat:'SENSITIVE',t:'ขอรหัสลับร่วมกับการเร่งหรือส่งลิงก์',d:'รูปแบบหลอกขโมยบัญชีที่ชัดเจน'});block=true;}
+  if(ids.has('remote')||ids.has('safeacc'))block=true;
+  if(ids.has('threat')&&ids.has('authority'))hits.push({w:15,cat:'THREAT',t:'อ้างเจ้าหน้าที่ร่วมกับการข่มขู่',d:'รูปแบบเดียวกับแก๊งคอลเซ็นเตอร์'});
+  let score=Math.min(100,hits.reduce((a,h)=>a+h.w,0));if(block)score=Math.max(score,85);
+  const level=score>=60?'d':score>=30?'w':'s';
+  hits.sort((a,b)=>b.w-a.w);
+  return {score,level,block,hits,urls,text};
+}
+
+/* ---------------- screens ---------------- */
+const LV={s:['ความเสี่ยงต่ำ','var(--safe)','var(--safe-c)','#14532D'],w:['น่าสงสัย','var(--warn)','var(--warn-c)','#78350F'],d:['อันตราย','var(--danger)','var(--danger-c)','#7F1D1D']};
+const CATI={SENSITIVE:'key',URGENCY:'clock',IMPERSONATION:'person',MONEY:'pay',THREAT:'gavel',ACTION:'link',REMOTE:'lock',SECRECY:'lock',LINK:'link',INFO:'info'};
+const status=(dark)=>`<div class="status" style="color:${dark?'#fff':'#0F172A'}"><span>9:41</span><span>●●● ▮</span></div>`;
+const nav=(on)=>`<div class="navbar">${[['home','หน้าหลัก','home'],['history','ประวัติ','hist'],['settings','ตั้งค่า','set']].map(([k,l,i])=>`<button class="${on===k?'on':''}" onclick="go('${k}')"><span class="ic">${ic(i)}</span>${l}</button>`).join('')}</div>`;
+const tabTop=`<div class="topbar center"><span class="logo">${shield('#fff','#1E4FD8',18)}</span>ScamSense</div>`;
+const sub=(t)=>`<div class="topbar"><span class="back" onclick="go('home')">${ic('back')}</span>${t}</div>`;
+
+const S={
+ loading:()=>`<div class="loading">${''}<div style="flex:1"></div><div class="rings"><i></i><i></i><i></i><div class="core">${shield('#fff','#1E4FD8',54)}</div></div>
+  <div style="font-size:2em;font-weight:700;margin-top:18px">ScamSense</div><div style="opacity:.88">ผู้ช่วยรู้ทันมิจฉาชีพ<br>สำหรับคุณและครอบครัว</div><div style="flex:1"></div>
+  <div class="bar"><span></span></div><div style="margin-top:10px;font-size:.92em" id="lstat">กำลังเตรียมฐานข้อมูลกลโกง…</div><div style="opacity:.7;font-size:.78em;margin:6px 0 14px">ทำงานในเครื่อง 100% • ไม่ส่งข้อมูลออกไปไหน</div></div>`,
+ home:()=>`${status()}${tabTop}<div class="scroll"><div class="pad">
+  <h4 class="greet">สวัสดีตอนเช้า</h4><h3 class="title">มีข้อความน่าสงสัยไหม?</h3>
+  <div class="hero"><div class="row"><span class="badge">${shield('#fff','#1E4FD8',26)}</span><div><b style="font-size:1.12em">ให้ ScamSense ช่วยดู</b><div style="opacity:.88;font-size:.9em">พูด พิมพ์ หรือวางข้อความที่ได้รับ</div></div></div>
+   <button class="btn white" onclick="go('check')">${ic('mic','#1E4FD8','1.4em')} กดแล้วพูดได้เลย</button>
+   <button class="btn ghost" onclick="go('check')">${ic('edit')} พิมพ์หรือวางข้อความ</button></div>
+  <div class="sec">เลือกสิ่งที่ต้องการตรวจ</div>
+  <div class="grid2">
+   <div class="tile" onclick="go('check')"><div class="ib" style="background:#DBE7FE">${ic('sms','#2563EB','1.5em')}</div><b>ข้อความ</b><small>SMS, LINE, แชท</small></div>
+   <div class="tile" onclick="go('check','link')"><div class="ib" style="background:#EDE4FE">${ic('link','#7C3AED','1.5em')}</div><b>ลิงก์</b><small>เว็บที่ถูกส่งมา</small></div>
+   <div class="tile" onclick="go('check','phone')"><div class="ib" style="background:#D6EEF3">${ic('phone','#0E7490','1.5em')}</div><b>เบอร์โทร</b><small>เบอร์ที่โทรเข้ามา</small></div>
+   <div class="tile" onclick="go('tx')"><div class="ib" style="background:#F6E7D6">${ic('pay','#B45309','1.5em')}</div><b>การโอนเงิน</b><small>ก่อนกดโอน ตรวจก่อน</small></div></div>
+  <div class="card"><span class="av" style="background:var(--pc)">${ic('family','#0A2472','1.4em')}</span><div class="grow"><small>ผู้ดูแลของคุณ</small><b>ลูกสาว สมใจ</b><small style="color:var(--brand)">แตะเพื่อโทรหา</small></div>${ic('call','#1E4FD8')}</div>
+  <div class="card red"><span class="av" style="background:var(--danger)">${ic('call','#fff')}</span><div class="grow"><b>โดนหลอก หรือไม่แน่ใจ?</b><div style="font-size:.9em">โทรสายด่วน 1441 ศูนย์ AOC ตลอด 24 ชม.</div></div></div>
+  <div class="card tip">${ic('bulb','#083344','1.6em')}<div><b>รู้ทันกลโกงวันนี้</b><div style="font-size:.92em">ตำรวจจริงไม่โทรมาให้โอนเงินเพื่อ "ตรวจสอบ" ถ้ามีคนพูดแบบนี้ ให้วางสายทันที</div></div></div>
+ </div></div>${nav('home')}`,
+ check:(mode)=>{const m=mode||'msg';const t={msg:['ตรวจข้อความ','วางข้อความจาก SMS, LINE หรือพูดสิ่งที่ปลายสายบอก'],link:['ตรวจลิงก์','วางลิงก์ที่ได้รับ ระบบจะตรวจโดยไม่เปิดลิงก์นั้น'],phone:['ตรวจเบอร์โทร','พิมพ์เบอร์ที่โทรเข้ามา']}[m];
+  return `${status()}${sub(t[0])}<div class="scroll"><div class="pad">
+  <p class="muted" style="margin-bottom:10px">${t[1]}</p>
+  <textarea id="inp" rows="${m==='msg'?6:2}" placeholder="${m==='phone'?'เช่น 081-234-5678':m==='link'?'https://…':'ข้อความที่ได้รับ'}">${window.__prefill||''}</textarea>
+  <div style="display:flex;gap:8px;margin:10px 0"><button class="btn tonal" onclick="document.getElementById('inp').value=EX[1]">${ic('paste')} วางข้อความ</button><button class="btn tonal" onclick="document.getElementById('inp').value=EX[0]">${ic('mic')} พูด</button></div>
+  <button class="btn primary" style="min-height:56px" onclick="run()">${ic('search')} ตรวจสอบเลย</button>
+  <div class="sec" style="font-size:1em;color:var(--muted)">ลองตัวอย่าง</div>
+  <div class="chips"><button class="chip" onclick="fill(0)">ตัวอย่าง: อ้างเป็นตำรวจ</button><button class="chip" onclick="fill(1)">ตัวอย่าง: พัสดุ</button><button class="chip" onclick="fill(3)">ลิงก์ปลอมธนาคาร</button><button class="chip" onclick="fill(2)">ตัวอย่าง: ข้อความปกติ</button></div>
+ </div></div>`},
+ analyzing:()=>`${status()}${sub('ตรวจข้อความ')}<div style="flex:1;display:flex;flex-direction:column;justify-content:center;text-align:center;padding:20px"><div class="spin">${shield('#1E4FD8','#fff',48)}</div><b style="font-size:1.3em;margin-top:16px">กำลังตรวจสอบ…</b><p class="muted">ตรวจคำอันตราย ลิงก์ เบอร์โทร และเทียบกับกลโกงที่รู้จัก</p></div>`,
+ result:(r)=>{r=r||analyze(EX[0]);const [lab,col]=LV[r.level];const ang=240*r.score/100;
+  const arc=(deg)=>{const R=62,cx=75,cy=75,a0=150*Math.PI/180,a1=(150+deg)*Math.PI/180;const x0=cx+R*Math.cos(a0),y0=cy+R*Math.sin(a0),x1=cx+R*Math.cos(a1),y1=cy+R*Math.sin(a1);return `M${x0} ${y0} A${R} ${R} 0 ${deg>180?1:0} 1 ${x1} ${y1}`};
+  const summary=r.block?'หยุดก่อน! นี่คือรูปแบบของมิจฉาชีพ อย่าทำตาม อย่าโอนเงิน และอย่าให้ข้อมูลใด ๆ':r.level==='d'?'อันตราย มีหลายสัญญาณของมิจฉาชีพ':r.level==='w'?'น่าสงสัย ควรตรวจสอบก่อน ถามลูกหลานหรือโทรถามหน่วยงานโดยตรง':'ยังไม่พบสัญญาณอันตราย แต่ถ้ามีคนขอเงินหรือรหัส ให้ระวังไว้เสมอ';
+  const reasons=(r.hits.length?r.hits:[{w:0,cat:'INFO',t:'ไม่พบคำหรือรูปแบบที่เป็นอันตราย',d:'ระบบตรวจคำ ลิงก์ และความคล้ายกับกลโกงที่รู้จักแล้ว'}]).slice(0,6);
+  return `<div class="scroll"><div class="vhead" style="background:${col}">${status(true)}<div class="topbar"><span class="back" onclick="go('home')">${ic('back','#fff')}</span><span style="flex:1;text-align:left">ผลการตรวจ</span><span class="back" onclick="go('home')">${ic('close','#fff')}</span></div>
+   ${r.block?`<div class="stop">${ic('block','#fff')} หยุด! อย่าทำตามข้อความนี้</div>`:''}
+   <div class="gauge"><svg width="150" height="150"><path d="${arc(240)}" stroke="rgba(255,255,255,.28)" stroke-width="13" fill="none" stroke-linecap="round"/>${r.score>0?`<path d="${arc(Math.max(ang,1))}" stroke="#fff" stroke-width="13" fill="none" stroke-linecap="round"/>`:''}</svg><div class="num">${r.score}</div><div class="of">จาก 100</div></div>
+   <div class="level">${lab}</div><div style="padding:0 22px;font-size:.95em">${summary}</div></div>
+  <div class="pad" style="padding-top:14px">
+   ${r.level!=='s'?`<button class="btn" style="background:${col};color:#fff;min-height:54px">${ic('sms','#fff')} แจ้งเตือน ลูกสาว สมใจ</button><button class="btn outline" style="color:${col};margin-top:8px">${ic('call')} โทรสายด่วน 1441 (24 ชม.)</button>`:''}
+   <div style="display:flex;gap:8px;margin-top:8px"><button class="btn outline" style="color:var(--brand)">${ic('share')} ส่งให้ลูกหลาน</button><button class="btn outline" style="color:var(--brand)">${ic('play')} ฟังผล</button></div>
+   <div class="sec">ทำไมระบบประเมินแบบนี้</div><div class="whitecard">${reasons.map(h=>{const c=h.w>=25?'var(--danger)':h.w>0?'var(--warn)':'var(--brand)';return `<div class="reason"><span class="dot" style="background:color-mix(in srgb,${c} 14%,white)">${ic(CATI[h.cat]||'warn',c,'1.1em')}</span><div><b>${h.t}</b><small>${h.d}</small>${h.ev?`<span class="ev">${h.ev}</span>`:''}</div></div>`}).join('')}</div>
+   <div class="sec">ควรทำอย่างไรต่อ</div><div class="whitecard">${(r.level==='s'?['ถ้าไม่แน่ใจ ส่งให้ลูกหลานช่วยดู หรือโทรสายด่วน 1441 ได้ตลอด 24 ชั่วโมง']:['อย่าตอบกลับ อย่ากดลิงก์ และอย่าโทรกลับเบอร์ในข้อความ','ยังไม่ต้องโอนเงิน ให้ปรึกษาลูกหลานหรือคนที่ไว้ใจก่อน','ถ้าโอนเงินไปแล้ว รีบโทรธนาคารของคุณ และสายด่วน 1441 ทันที']).map(a=>`<div class="reason">${ic('ok','#1E4FD8','1.3em')}<div>${a}</div></div>`).join('')}</div>
+   <button class="btn primary" style="margin-top:14px" onclick="go('home')">ตรวจรายการอื่น</button>
+   <p class="muted" style="text-align:center;font-size:.78em;margin-top:8px">วิเคราะห์ในเครื่อง 3 มิลลิวินาที • ไม่มีการส่งข้อมูลออก</p></div></div>`},
+ tx:()=>{const items=['ถูกบอกให้โอนเงินไป "บัญชีปลอดภัย"','ผู้ติดต่ออ้างเป็นตำรวจ เจ้าหน้าที่รัฐ หรือธนาคาร','มีคนโทรหรือแชทมาบอกให้โอน','ต้องจ่ายค่าธรรมเนียมก่อน จึงจะได้เงินกู้หรือรางวัล','ชวนลงทุน ได้ผลตอบแทนสูง','ถูกบอกว่าห้ามบอกใคร หรือห้ามวางสาย'];
+  return `${status()}${sub('ตรวจก่อนโอนเงิน')}<div class="scroll"><div class="pad"><p class="muted" style="margin-bottom:10px">ตอบคำถามสั้น ๆ ก่อนกดโอน ระบบจะบอกว่าการโอนนี้เสี่ยงแค่ไหน</p>
+  <input class="field" value="80,000" style="font-size:1.4em;font-weight:600"><div class="card"><div class="grow"><b>รู้จักผู้รับเงินเป็นการส่วนตัว</b><small>เคยเจอตัวจริง หรือเป็นญาติ/เพื่อน</small></div><div class="toggle" style="background:#CBD5E1"></div></div>
+  <div class="sec">มีเหตุการณ์เหล่านี้ไหม</div>${items.map((t,i)=>`<div class="check-row ${i<2?'on':''}" onclick="this.classList.toggle('on')"><span class="box">✓</span>${t}</div>`).join('')}
+  <button class="btn primary" style="margin-top:8px;min-height:54px" onclick="txRun()">${ic('search')} ประเมินความเสี่ยง</button></div></div>`},
+ history:()=>`${status()}${tabTop}<div class="scroll"><div class="pad"><div style="display:flex;justify-content:space-between;align-items:center"><div class="sec">ประวัติการตรวจ (4)</div><span style="color:var(--brand);font-weight:600">ลบทั้งหมด</span></div>
+  ${[[100,'d','เมื่อสักครู่','sms','ติดต่อจากสถานีตำรวจ บัญชีของท่านพัวพันคดีฟอกเงิน…'],[30,'w','1 ชั่วโมงที่แล้ว','link','bit.ly/3xYz9'],[10,'s','2 ชั่วโมงที่แล้ว','phone','081-•••-•678'],[78,'d','3 ชั่วโมงที่แล้ว','sms','พัสดุของท่านจัดส่งไม่สำเร็จ กรุณาอัปเดตที่อยู่…']].map(([s,l,t,i,p])=>`<div class="hist"><span class="score" style="background:${LV[l][2]};color:${LV[l][3]}">${s}</span><div style="flex:1;min-width:0"><div style="display:flex;gap:6px;align-items:center">${ic(i,'#475569','1em')}<span class="lvl" style="background:${LV[l][2]};color:${LV[l][3]}">${LV[l][0]}</span><span class="muted" style="margin-left:auto;font-size:.78em">${t}</span></div><div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p}</div></div></div>`).join('')}
+  <p class="muted" style="font-size:.82em;text-align:center;margin-top:8px">${ic('lock','#475569','1em')} เก็บแบบเข้ารหัสในเครื่องนี้เท่านั้น</p></div></div>${nav('history')}`,
+ settings:()=>`${status()}${tabTop}<div class="scroll"><div class="pad"><div class="sec">ผู้ดูแล / ลูกหลาน</div><div class="whitecard"><p class="muted" style="font-size:.88em;margin-bottom:8px">เมื่อพบข้อความอันตราย กดส่งคำเตือนถึงผู้ดูแลได้ทันที</p><input class="field" value="ลูกสาว สมใจ"><input class="field" value="081-234-5678" style="margin-top:8px"><button class="btn primary" style="margin-top:10px">บันทึกผู้ดูแล</button></div>
+  <div class="sec">การแสดงผล</div><div class="whitecard"><b>ขนาดตัวอักษร</b><div class="seg" style="margin:6px 0 12px"><span>ปกติ</span><span class="on">ใหญ่</span><span>ใหญ่มาก</span></div><b>ธีม</b><div class="seg" style="margin-top:6px"><span class="on">ตามเครื่อง</span><span>สว่าง</span><span>มืด</span></div></div>
+  <div class="sec">คำที่ต้องการบล็อก</div><div class="whitecard"><span class="ichip">บัญชีปลอดภัย ✕</span><span class="ichip">โครงการพิเศษ ✕</span><span class="ichip" style="color:var(--brand)">${ic('add','#1E4FD8','1em')} เพิ่มคำ</span></div>
+  <div class="sec">ความเป็นส่วนตัว</div><div class="whitecard"><div style="display:flex;align-items:center;gap:10px"><div style="flex:1"><b>บันทึกประวัติการตรวจ</b><small class="muted" style="display:block">เก็บแบบเข้ารหัสในเครื่องนี้เท่านั้น</small></div><div class="toggle"></div></div><p class="muted" style="font-size:.82em;margin-top:10px">${ic('lock','#1E4FD8','1em')} ไม่ใช้อินเทอร์เน็ต ไม่ขอสิทธิ์ใด ๆ ข้อมูลเข้ารหัสด้วย Android Keystore</p></div></div></div>${nav('settings')}`,
+};
+const EX=['ติดต่อจากสถานีตำรวจ บัญชีของท่านพัวพันคดีฟอกเงิน ต้องโอนเงินไปบัญชีปลอดภัยเพื่อตรวจสอบ ห้ามวางสาย ห้ามบอกใคร','พัสดุของท่านจัดส่งไม่สำเร็จ กรุณาอัปเดตที่อยู่และชำระค่าธรรมเนียม 25 บาท ที่ https://thpost-delivery.top/pay','พรุ่งนี้แม่จะไปหาที่บ้านนะ ทำกับข้าวไว้ด้วย คิดถึงหลาน','ด่วน! บัญชีของคุณถูกระงับ กรอกรหัส OTP ที่ http://kbank-verify.xyz/login'];
+const live=document.getElementById('live');let mode='msg';
+function go(s,m){if(s==='check'){mode=m||'msg';}live.innerHTML=s==='check'?S.check(mode):S[s]();if(s==='loading')setTimeout(()=>go('home'),1700);}
+function fill(i){document.getElementById('inp').value=EX[i]}
+function run(){const v=document.getElementById('inp').value.trim();if(!v){document.getElementById('inp').style.borderColor='var(--danger)';return}live.innerHTML=S.analyzing();setTimeout(()=>{live.innerHTML=S.result(analyze(v))},700)}
+function txRun(){live.innerHTML=S.analyzing();setTimeout(()=>{live.innerHTML=S.result({score:100,level:'d',block:true,hits:[{w:50,cat:'MONEY',t:'ถูกบอกให้โอนเงินไป "บัญชีปลอดภัย"',d:'ไม่มีหน่วยงานใดให้โอนเงินไปตรวจสอบ นี่คือกลโกงแน่นอน'},{w:35,cat:'IMPERSONATION',t:'ผู้ติดต่ออ้างเป็นตำรวจ เจ้าหน้าที่รัฐ หรือธนาคาร',d:'เจ้าหน้าที่จริงไม่ขอให้โอนเงิน'},{w:15,cat:'MONEY',t:'จำนวนเงินสูงมาก',d:'ยอด 80,000 บาท ควรปรึกษาลูกหลานก่อน'},{w:15,cat:'MONEY',t:'ไม่รู้จักผู้รับเงินเป็นการส่วนตัว',d:'เงินที่โอนให้คนแปลกหน้า มักตามคืนไม่ได้'}]})},700)}
+go('loading');
+/* gallery */
+const G=[['หน้าโหลด (Loading)',S.loading()],['หน้าหลัก',S.home()],['ตรวจข้อความ (พิมพ์/วาง/พูด)',S.check('msg')],['กำลังวิเคราะห์',S.analyzing()],['ผล: อันตราย + บล็อก',S.result(analyze(EX[0]))],['ผล: ลิงก์พัสดุปลอม',S.result(analyze(EX[1]))],['ผล: ความเสี่ยงต่ำ',S.result(analyze(EX[2]))],['ตรวจก่อนโอนเงิน',S.tx()],['ประวัติ (เข้ารหัส)',S.history()],['ตั้งค่า / ผู้ดูแล',S.settings()]];
+document.getElementById('gallery').innerHTML=G.map(([c,h])=>`<figure><div class="phone"><div class="screen">${h}</div></div><figcaption>${c}</figcaption></figure>`).join('');
+</script>
+</body>
+</html>
