@@ -1,0 +1,70 @@
+<!DOCTYPE html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ScamSense — ผลประเมินความแม่นยำ</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE: research report, calm and exact. IDEA: a lab test certificate. PICTURE: the confusion matrix + headline metrics.
+   COLOUR: white, ink, brand blue #1E4FD8 dominant, green/amber for pass/partial. TYPE: IBM Plex Sans Thai. LAYOUT: one column, 980px. */
+:root{color-scheme:light dark;--bg:light-dark(#fff,#0b1220);--ink:light-dark(#0f172a,#e8edf7);--mut:light-dark(#475569,#a7b2c7);--line:light-dark(#e2e8f0,#22304d);--brand:#1E4FD8;--ok:#15803D;--warn:#B45309;--bad:#C81E1E;--soft:light-dark(#f4f6fb,#131c31)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 "IBM Plex Sans Thai",system-ui,sans-serif;overflow-x:clip}
+header{background:var(--brand);color:#fff;padding:clamp(28px,5vw,56px) max(5vw,16px)}header h1{font-size:clamp(28px,4.5vw,44px);line-height:1.15;margin:0 0 8px;text-wrap:balance}header p{margin:0;opacity:.9;max-width:760px}
+main{max-width:980px;margin:0 auto;padding:0 max(4vw,16px) 48px}h2{font-size:24px;margin:40px 0 10px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:-28px}
+.tile{background:var(--bg);border:1px solid var(--line);border-radius:16px;padding:16px}.tile b{display:block;font-size:30px;line-height:1.1;color:var(--brand)}.tile span{color:var(--mut);font-size:14px}
+table{width:100%;border-collapse:collapse;font-size:15px}th,td{border-bottom:1px solid var(--line);padding:8px;text-align:left;vertical-align:top}.num{text-align:right;white-space:nowrap}
+.cm{display:grid;grid-template-columns:auto 1fr 1fr;gap:6px;max-width:520px}.cm div{padding:14px;border-radius:12px;text-align:center}.cm .h{color:var(--mut);font-size:14px;padding:6px}
+.cm .tp,.cm .tn{background:color-mix(in srgb,var(--ok) 16%,transparent)}.cm .fp,.cm .fn{background:color-mix(in srgb,var(--bad) 14%,transparent)}.cm strong{display:block;font-size:28px}
+.bar{display:grid;grid-template-columns:minmax(120px,220px) 1fr 52px;gap:10px;align-items:center;margin:6px 0}.track{height:12px;background:var(--soft);border-radius:8px;overflow:hidden}.track i{display:block;height:100%}.track .ok{background:var(--ok)}.track .warn{background:var(--warn)}.bar b{text-align:right}
+.note{background:var(--soft);border-radius:14px;padding:14px 16px;color:var(--ink)}.scroll{overflow-x:auto}
+@media(max-width:600px){.bar{grid-template-columns:1fr 46px}.bar .track{grid-column:1/3;grid-row:2}}
+</style></head><body>
+<header><h1>ScamSense จับข้อความมิจฉาชีพได้ 93.3% และเตือนผิดเพียง 8.3%</h1>
+<p>ผลประเมินบนชุดทดสอบภาษาไทยที่แยกจากข้อมูลที่ใช้สร้างระบบ (120 ข้อความ: มิจฉาชีพ 60 • ข้อความปกติ 60) ตรวจในเครื่องเฉลี่ย 0.67 มิลลิวินาทีต่อข้อความ</p></header>
+<main>
+<div class="tiles">
+<div class="tile"><b>92.5%</b><span>ความถูกต้องโดยรวม (Accuracy)</span></div>
+<div class="tile"><b>93.3%</b><span>จับมิจฉาชีพได้ (Recall)</span></div>
+<div class="tile"><b>91.8%</b><span>เตือนแล้วถูก (Precision)</span></div>
+<div class="tile"><b>0.926</b><span>F1-score</span></div>
+<div class="tile"><b>90.0%</b><span>จับได้แม้มิจฉาชีพเลี่ยงคำ</span></div>
+<div class="tile"><b>1.04 ms</b><span>เวลาตรวจ (P95)</span></div>
+</div>
+
+<h2>ผลการจำแนก (เกณฑ์ "น่าสงสัย" ขึ้นไป = เตือน)</h2>
+<div class="cm"><div class="h"></div><div class="h">ระบบเตือน</div><div class="h">ระบบไม่เตือน</div>
+<div class="h">มิจฉาชีพจริง</div><div class="tp"><strong>56</strong>จับได้</div><div class="fn"><strong>4</strong>หลุด</div>
+<div class="h">ข้อความปกติ</div><div class="fp"><strong>5</strong>เตือนผิด</div><div class="tn"><strong>55</strong>ผ่านถูกต้อง</div></div>
+<p class="note">ถ้าใช้เกณฑ์ "อันตราย" (ระดับที่แอปขึ้นป้ายแดง/วางสายได้) ความแม่นของการเตือนสูงถึง <b>97.4%</b> (เตือนผิด 1 จาก 60) แต่จับได้ 61.7% — จึงออกแบบให้ระดับ "น่าสงสัย" เป็นการเตือนเบา และ "อันตราย/บล็อก" เป็นการตัดสินที่เข้มงวด</p>
+
+<h2>จับได้แยกตามประเภทกลโกง</h2>
+<div class="bar"><span>หลอกทำงานออนไลน์</span><div class="track"><i style="width:50%" class="warn"></i></div><b>50%</b></div>
+<div class="bar"><span>หลอกให้รัก</span><div class="track"><i style="width:50%" class="warn"></i></div><b>50%</b></div>
+<div class="bar"><span>หลอกขอ OTP/ข้อมูลบัตร</span><div class="track"><i style="width:80%" class="warn"></i></div><b>80%</b></div>
+<div class="bar"><span>ลิงก์ธนาคารปลอม</span><div class="track"><i style="width:100%" class="ok"></i></div><b>100%</b></div>
+<div class="bar"><span>พนันออนไลน์</span><div class="track"><i style="width:100%" class="ok"></i></div><b>100%</b></div>
+<div class="bar"><span>อ้างหน่วยงานรัฐ/คืนเงิน</span><div class="track"><i style="width:100%" class="ok"></i></div><b>100%</b></div>
+<div class="bar"><span>ประกันปลอม</span><div class="track"><i style="width:100%" class="ok"></i></div><b>100%</b></div>
+<div class="bar"><span>หลอกลงทุน</span><div class="track"><i style="width:100%" class="ok"></i></div><b>100%</b></div>
+<div class="bar"><span>เงินกู้ปลอม</span><div class="track"><i style="width:100%" class="ok"></i></div><b>100%</b></div>
+<div class="bar"><span>พัสดุ</span><div class="track"><i style="width:100%" class="ok"></i></div><b>100%</b></div>
+<div class="bar"><span>แก๊งคอลเซ็นเตอร์/ตำรวจปลอม</span><div class="track"><i style="width:100%" class="ok"></i></div><b>100%</b></div>
+<div class="bar"><span>หลอกว่าได้รางวัล</span><div class="track"><i style="width:100%" class="ok"></i></div><b>100%</b></div>
+<div class="bar"><span>แอบอ้างเป็นญาติ</span><div class="track"><i style="width:100%" class="ok"></i></div><b>100%</b></div>
+<div class="bar"><span>แอปควบคุมเครื่อง</span><div class="track"><i style="width:100%" class="ok"></i></div><b>100%</b></div>
+<div class="bar"><span>ร้านค้าปลอม</span><div class="track"><i style="width:100%" class="ok"></i></div><b>100%</b></div>
+<div class="bar"><span>ค่าน้ำค่าไฟ</span><div class="track"><i style="width:100%" class="ok"></i></div><b>100%</b></div>
+
+<h2>ความทนต่อการเลี่ยงคำ</h2>
+<p>นำข้อความมิจฉาชีพทั้ง 60 ข้อมาแปลงแบบที่พบใน SMS จริง: ใส่จุด/ขีดกลางคำ (บั.ญ.ชี, โ-อ-น), เว้นวรรคตัวอังกฤษ (O T P), ใช้เลขไทย, ใช้ "เเ" แทน "แ" และแทรกตัวอักษรล่องหน (zero-width) ระบบยังจับได้ <b>90.0%</b> (เทียบกับ 93.3% ก่อนแปลง)</p>
+
+<h2>เตือนผิดแยกตามประเภทข้อความปกติ</h2>
+<div class="scroll"><table><tr><th>ประเภท</th><th class="num">จำนวนที่เตือนผิด</th></tr><tr><td>ธนาคาร (ของจริง)</td><td class="num">1</td></tr><tr><td>ชุมชน</td><td class="num">0</td></tr><tr><td>ขนส่ง (ของจริง)</td><td class="num">0</td></tr><tr><td>ครอบครัว</td><td class="num">0</td></tr><tr><td>เพื่อน</td><td class="num">0</td></tr><tr><td>หน่วยงานรัฐ (ของจริง)</td><td class="num">1</td></tr><tr><td>สุขภาพ/โรงพยาบาล</td><td class="num">0</td></tr><tr><td>ข่าวเตือนภัย</td><td class="num">2</td></tr><tr><td>ร้านค้า (ของจริง)</td><td class="num">0</td></tr><tr><td>ค่าน้ำค่าไฟ (ของจริง)</td><td class="num">1</td></tr><tr><td>งาน</td><td class="num">0</td></tr></table></div>
+
+<h2>วิเคราะห์ข้อผิดพลาดทุกข้อ</h2>
+<div class="scroll"><table><tr><th>รหัส</th><th>ชนิด</th><th class="num">คะแนน</th><th>ข้อความ</th><th>สาเหตุ</th></tr><tr><td>s012</td><td>มิจฉาชีพที่หลุด</td><td class="num">10</td><td>ขอโทษนะคะ เผลอใส่เบอร์คุณตอนสมัครสมาชิก มีรหัสส่งไปที่เครื่องคุณ ช่วยส่งรหัสนั้นมาให้หน่อยได้ไหมคะ</td><td>ขอ &quot;รหัส&quot; อย่างสุภาพโดยไม่มีคำว่า OTP หรือการเร่งรัด — ต้องเข้าใจบริบทมากกว่าคำ</td></tr><tr><td>s035</td><td>มิจฉาชีพที่หลุด</td><td class="num">10</td><td>รับสมัครพนักงานรีวิวโรงแรม ทำผ่านมือถือ ได้เงินทุกวัน โอนค่าสมัครสมาชิก 500 บาทก่อนเริ่มงาน</td><td>งานรีวิวที่ให้จ่ายค่าสมัคร ใช้คำที่ไม่อยู่ในกฎ (&quot;ค่าสมัครสมาชิก&quot;)</td></tr><tr><td>s040</td><td>มิจฉาชีพที่หลุด</td><td class="num">25</td><td>ผมเป็นทหารประจำการต่างประเทศ อยากส่งเงินเก็บมาให้คุณดูแล แต่ต้องจ่ายค่าธรรมเนียมโอนเงินก่อน</td><td>หลอกให้รักแบบอ้างเป็นทหาร คะแนน 25 ต่ำกว่าเกณฑ์เพียงเล็กน้อย</td></tr><tr><td>s056</td><td>มิจฉาชีพที่หลุด</td><td class="num">28</td><td>งานแพ็คสินค้าอยู่บ้าน รายได้วันละ 1,200 บาท ต้องจ่ายค่าอุปกรณ์ก่อน 990 บาท</td><td>งานแพ็คของที่ให้จ่ายค่าอุปกรณ์ คะแนน 28 ต่ำกว่าเกณฑ์เพียงเล็กน้อย</td></tr><tr><td>b015</td><td>เตือนผิด</td><td class="num">49</td><td>ธนาคารไม่มีนโยบายส่ง SMS แนบลิงก์ให้กรอกข้อมูลส่วนตัว หากสงสัยโทร 02-888-8888</td><td>ข้อความเตือนจากธนาคารจริงที่พูดถึง &quot;ข้อมูลส่วนตัว&quot; และ &quot;ลิงก์&quot; — ระบบไม่เข้าใจการปฏิเสธ (&quot;ไม่มีนโยบาย&quot;)</td></tr><tr><td>b021</td><td>เตือนผิด</td><td class="num">30</td><td>การไฟฟ้าแจ้งค่าไฟเดือนตุลาคม 845 บาท ชำระได้ที่ร้านสะดวกซื้อหรือแอปธนาคารภายในวันที่ 20</td><td>บิลค่าไฟจริง: &quot;การไฟฟ้า&quot; + &quot;ภายใน&quot; ถูกนับเป็นอ้างหน่วยงาน + เร่งรัด</td></tr><tr><td>b041</td><td>เตือนผิด</td><td class="num">30</td><td>ตำรวจเตือน! อย่าโอนเงินให้คนที่อ้างเป็นเจ้าหน้าที่ทางโทรศัพท์ หากสงสัยโทร 1441</td><td>ข่าวเตือนภัยใช้คำเดียวกับมิจฉาชีพ (&quot;ตำรวจ&quot;, &quot;โอนเงิน&quot;)</td></tr><tr><td>b042</td><td>เตือนผิด</td><td class="num">57</td><td>ธนาคารแห่งประเทศไทยเตือน ระวังแอปดูดเงิน อย่าติดตั้งแอปจากลิงก์ที่ไม่รู้จัก</td><td>ข่าวเตือนภัยที่บอกว่า &quot;อย่าติดตั้งแอป&quot; — ระบบไม่เข้าใจคำปฏิเสธ</td></tr><tr><td>b056</td><td>เตือนผิด</td><td class="num">69</td><td>สำนักงานเขตเปิดให้ลงทะเบียนผู้สูงอายุรับเบี้ยยังชีพ นำบัตรประชาชนและสมุดบัญชีมาที่สำนักงาน</td><td>&quot;สมุดบัญชีมา&quot; ถูกการจับคำแบบสะกดผิดได้ 1 ตัว มองเป็น &quot;บัญชีม้า&quot;</td></tr></table></div>
+<p class="note">ข้อสังเกต: ข้อผิดพลาดส่วนใหญ่มาจาก <b>การไม่เข้าใจคำปฏิเสธ</b> (ข่าวเตือนภัย "อย่าติดตั้งแอป") และ <b>คำทั่วไปที่ไม่อยู่ในกฎ</b> — เป็นโจทย์วิจัยต่อยอดด้วยโมเดลความหมาย (semantic model) ขนาดเล็กที่ทำงานในเครื่อง</p>
+
+<h2>ระเบียบวิธี</h2>
+<p>ชุดทดสอบเขียนแยกจากแม่แบบกลโกงที่ใช้สร้างระบบ ครอบคลุม 16 ประเภทกลโกง และข้อความปกติ 11 ประเภท รวมข้อความยาก (SMS OTP จริง, บิลค่าไฟจริง, ลูกขอให้โอนค่าเทอม, ข่าวเตือนภัย) ไม่มีการปรับกฎหลังเห็นผล การประเมินรันอัตโนมัติทุกครั้งที่ build (<code>BenchmarkEvaluation</code>) และตั้งเกณฑ์ขั้นต่ำกันประสิทธิภาพถดถอย (Recall ≥ 90%, FPR ≤ 10%, ทนการเลี่ยงคำ ≥ 85%) เวลาตรวจวัดบน JVM ของเครื่องพัฒนา</p>
+<p class="note"><b>ข้อจำกัด:</b> ข้อความทดสอบแต่งขึ้นโดยผู้พัฒนาตามรูปแบบกลโกงที่มีการเผยแพร่ต่อสาธารณะ ยังไม่ใช่ข้อความจากผู้เสียหายจริง และมีขนาด 120 ข้อความ ขั้นต่อไปควรเก็บข้อมูลจริงร่วมกับหน่วยงาน (เช่น ศูนย์ AOC 1441) และประเมินโดยผู้ประเมินอิสระ ผลของการฟังระหว่างคุย (แปลงเสียงเป็นข้อความ) ยังไม่ได้ประเมินกับสายจริง</p>
+</main></body></html>
