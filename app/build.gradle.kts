@@ -24,8 +24,8 @@ android {
         applicationId = "com.scamsense.app"
         minSdk = 23          // Android 6.0+ (~99% of active devices); needed for Keystore AES-GCM
         targetSdk = 35
-        versionCode = 3
-        versionName = "1.2.0"
+        versionCode = 4
+        versionName = "1.2.1"
         vectorDrawables.useSupportLibrary = true
         @Suppress("UnstableApiUsage")
         resourceConfigurations += listOf("th", "en")

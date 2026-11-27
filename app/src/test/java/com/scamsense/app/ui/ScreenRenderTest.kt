@@ -191,6 +191,23 @@ class ScreenRenderTest {
         }
     }
 
+    @Test fun liveGuardNeedsShizuku() {
+        shoot("14b_live_guard_install") {
+            androidx.compose.foundation.layout.Column(
+                androidx.compose.ui.Modifier.verticalScroll(androidx.compose.foundation.rememberScrollState()).padding(20.dp),
+            ) {
+                LiveGuardSection(
+                    AppSettings(),
+                    LiveGuardState(supported = true, shizuku = ShizukuGate.Status.NOT_INSTALLED, phonePermission = false,
+                        modelInstalled = false, nativeAvailable = true),
+                    downloadProgress = null, onUpdate = {}, onDownloadModel = {}, onRefresh = {},
+                )
+            }
+        }
+        compose.onNodeWithText("ดูวิธีเปิด Shizuku ทีละขั้น").performClick()
+        compose.onNodeWithText("พิมพ์รหัส 6 หลักลงในการแจ้งเตือนของ Shizuku").assertExists()
+    }
+
     @Test fun callLog() = shoot("13_call_log") {
         val now = System.currentTimeMillis()
         CallLogScreen(

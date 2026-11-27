@@ -43,6 +43,29 @@ object ShizukuGate {
         }.onFailure { onResult(false) }
     }
 
+    /** Opens Shizuku's Play Store page (falls back to the web page, then the official site). */
+    fun openInstallPage(context: Context): Boolean {
+        val targets = listOf(
+            "market://details?id=$SHIZUKU_PACKAGE",
+            "https://play.google.com/store/apps/details?id=$SHIZUKU_PACKAGE",
+            "https://shizuku.rikka.app/download/",
+        )
+        return targets.any { uri ->
+            runCatching {
+                context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(uri))
+                    .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK))
+                true
+            }.getOrDefault(false)
+        }
+    }
+
+    /** Opens Developer options, where Wireless debugging lives. */
+    fun openDeveloperOptions(context: Context): Boolean = runCatching {
+        context.startActivity(android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS)
+            .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK))
+        true
+    }.getOrDefault(false)
+
     fun launchShizukuApp(context: Context): Boolean = runCatching {
         val i = context.packageManager.getLaunchIntentForPackage(SHIZUKU_PACKAGE) ?: return false
         context.startActivity(i.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK))

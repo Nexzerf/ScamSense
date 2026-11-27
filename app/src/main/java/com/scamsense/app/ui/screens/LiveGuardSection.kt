@@ -1,7 +1,6 @@
 package com.scamsense.app.ui.screens
 
 import android.Manifest
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -51,7 +50,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
-import androidx.core.net.toUri
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.scamsense.app.data.AppSettings
 import com.scamsense.app.livecall.ShizukuGate
@@ -132,13 +130,12 @@ fun LiveGuardSection(
                 ShizukuGate.Status.NO_PERMISSION -> "ยังไม่ได้อนุญาตให้ ScamSense ใช้"
             })
             when (state.shizuku) {
-                ShizukuGate.Status.NOT_INSTALLED -> Action("วิธีติดตั้ง Shizuku") {
-                    runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, "https://shizuku.rikka.app/download/".toUri()).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
-                }
+                ShizukuGate.Status.NOT_INSTALLED -> Action("ติดตั้ง Shizuku จาก Play Store (ฟรี)") { ShizukuGate.openInstallPage(context) }
                 ShizukuGate.Status.NOT_RUNNING -> Action("เปิดแอป Shizuku") { ShizukuGate.launchShizukuApp(context) }
                 ShizukuGate.Status.NO_PERMISSION -> Action("อนุญาตให้ใช้ Shizuku") { ShizukuGate.requestPermission { onRefresh() } }
                 ShizukuGate.Status.READY -> Unit
             }
+            if (state.shizuku != ShizukuGate.Status.READY) ShizukuGuide(onOpenDevOptions = { ShizukuGate.openDeveloperOptions(context) })
             Spacer(Modifier.height(12.dp))
 
             // ---- phone state permission
@@ -191,6 +188,53 @@ fun LiveGuardSection(
                 style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
+    }
+}
+
+private val GUIDE_STEPS = listOf(
+    "ติดตั้งแอป Shizuku จาก Play Store (ปุ่มด้านบน)",
+    "เปิดโหมดนักพัฒนา: ตั้งค่า → เกี่ยวกับโทรศัพท์ → แตะ \"หมายเลขบิลด์\" 7 ครั้ง",
+    "เชื่อมต่อ Wi‑Fi (ไม่ต้องมีอินเทอร์เน็ตก็ได้)",
+    "เปิดแอป Shizuku → \"เริ่มผ่าน Wireless debugging\" → \"จับคู่\" ระบบจะขึ้นการแจ้งเตือนรอรหัส",
+    "ไปที่ ตัวเลือกสำหรับนักพัฒนา → การแก้ไขข้อบกพร่องแบบไร้สาย → เปิด แล้วแตะ \"จับคู่อุปกรณ์ด้วยรหัสจับคู่\"",
+    "พิมพ์รหัส 6 หลักลงในการแจ้งเตือนของ Shizuku",
+    "กลับไปแอป Shizuku กด \"เริ่ม\" แล้วกลับมาที่ ScamSense กด \"อนุญาตให้ใช้ Shizuku\"",
+)
+
+/** Step-by-step Thai guide for the person setting Shizuku up (usually a family member). */
+@Composable
+private fun ShizukuGuide(onOpenDevOptions: () -> Unit) {
+    var open by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(false) }
+    Spacer(Modifier.height(8.dp))
+    Text(
+        if (open) "ซ่อนวิธีเปิด Shizuku" else "ดูวิธีเปิด Shizuku ทีละขั้น",
+        style = MaterialTheme.typography.labelLarge,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.fillMaxWidth().heightIn(min = 44.dp)
+            .toggleable(open, role = Role.Button) { open = it }.padding(vertical = 10.dp),
+    )
+    if (!open) return
+    Column(
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surfaceVariant).padding(14.dp),
+    ) {
+        GUIDE_STEPS.forEachIndexed { i, step ->
+            Row(Modifier.padding(vertical = 4.dp), verticalAlignment = Alignment.Top) {
+                Box(Modifier.size(26.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary), contentAlignment = Alignment.Center) {
+                    Text("${i + 1}", color = MaterialTheme.colorScheme.onPrimary, style = MaterialTheme.typography.labelMedium)
+                }
+                Spacer(Modifier.width(10.dp))
+                Text(step, style = MaterialTheme.typography.bodyMedium)
+            }
+        }
+        Spacer(Modifier.height(8.dp))
+        BigOutlinedButton("เปิดตัวเลือกสำหรับนักพัฒนา", onClick = onOpenDevOptions)
+        Spacer(Modifier.height(8.dp))
+        Text(
+            "สำคัญ: หลังปิด-เปิดเครื่องใหม่ ต้องเปิดแอป Shizuku แล้วกด \"เริ่ม\" อีกครั้ง (Android 13 ขึ้นไปตั้งให้เริ่มเองได้ในการตั้งค่าของ Shizuku เมื่อต่อ Wi‑Fi ที่เชื่อถือ) " +
+                "• มือถือ OPPO / OnePlus / Realme: เปิด \"Disable system optimization\" ในตัวเลือกสำหรับนักพัฒนาก่อน",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 
