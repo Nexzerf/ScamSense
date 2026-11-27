@@ -139,13 +139,22 @@ class HistoryRepository(private val store: BlobStore) {
     private val _items = MutableStateFlow<List<RiskResult>>(emptyList())
     val items: StateFlow<List<RiskResult>> = _items.asStateFlow()
     private val mutex = Mutex()
+    @Volatile private var loaded = false
 
     suspend fun load() = withContext(Dispatchers.IO) {
-        mutex.withLock { _items.value = store.read()?.let(::decodeList) ?: emptyList() }
+        mutex.withLock { loadLocked() }
+    }
+
+    private fun loadLocked() {
+        _items.value = store.read()?.let(::decodeList) ?: emptyList()
+        loaded = true
     }
 
     suspend fun add(result: RiskResult) = withContext(Dispatchers.IO) {
         mutex.withLock {
+            // A background writer (live-call service) may run before the UI loaded the
+            // history: load first, otherwise persisting would overwrite the saved list.
+            if (!loaded) loadLocked()
             _items.update { (listOf(result) + it).take(MAX_ITEMS) }
             persist()
         }
@@ -153,6 +162,7 @@ class HistoryRepository(private val store: BlobStore) {
 
     suspend fun remove(analyzedAt: Long) = withContext(Dispatchers.IO) {
         mutex.withLock {
+            if (!loaded) loadLocked()
             _items.update { list -> list.filterNot { it.analyzedAt == analyzedAt } }
             persist()
         }

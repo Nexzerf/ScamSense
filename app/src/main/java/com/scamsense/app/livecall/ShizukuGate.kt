@@ -7,6 +7,7 @@ import android.content.pm.PackageManager
 import android.os.IBinder
 import com.scamsense.app.BuildConfig
 import com.scamsense.app.livecall.shell.CallAudioUserService
+import androidx.core.net.toUri
 import rikka.shizuku.Shizuku
 
 /** Everything ScamSense needs from Shizuku: status, permission, and the shell helper. */
@@ -52,7 +53,7 @@ object ShizukuGate {
         )
         return targets.any { uri ->
             runCatching {
-                context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(uri))
+                context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, uri.toUri())
                     .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK))
                 true
             }.getOrDefault(false)

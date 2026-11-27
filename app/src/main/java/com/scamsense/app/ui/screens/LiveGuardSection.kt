@@ -21,6 +21,7 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.BatteryChargingFull
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Download
 import androidx.compose.material.icons.rounded.Hearing
@@ -69,6 +70,8 @@ data class LiveGuardState(
     val phonePermission: Boolean,
     val modelInstalled: Boolean,
     val nativeAvailable: Boolean,
+    /** Exempt from battery optimisation: Android 12+ then lets the listener start by itself. */
+    val backgroundAllowed: Boolean = true,
 ) {
     val ready get() = supported && shizuku == ShizukuGate.Status.READY && phonePermission && modelInstalled && nativeAvailable
 }
@@ -85,6 +88,8 @@ fun rememberLiveGuardState(settings: AppSettings, refreshKey: Any?): LiveGuardSt
             phonePermission = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED,
             modelInstalled = WhisperModels.isInstalled(context, WhisperModel.byId(settings.liveModel)),
             nativeAvailable = WhisperNative.isAvailable,
+            backgroundAllowed = Build.VERSION.SDK_INT < Build.VERSION_CODES.R ||
+                com.scamsense.app.livecall.LiveCallService.isBackgroundStartAllowed(context),
         )
     }
 }
@@ -142,6 +147,21 @@ fun LiveGuardSection(
             Check(Icons.Rounded.PhoneInTalk, "รู้ว่ารับสายหรือวางสายแล้ว", state.phonePermission,
                 if (state.phonePermission) "อนุญาตแล้ว" else "ต้องอนุญาต เพื่อเริ่มฟังตอนรับสาย")
             if (!state.phonePermission) Action("อนุญาต") { phoneLauncher.launch(Manifest.permission.READ_PHONE_STATE) }
+            Spacer(Modifier.height(12.dp))
+
+            // ---- background start (battery optimisation exemption)
+            Check(Icons.Rounded.BatteryChargingFull, "เริ่มฟังเองได้ทันทีที่มีสาย", state.backgroundAllowed,
+                if (state.backgroundAllowed) "อนุญาตแล้ว" else "แนะนำ: ถ้าไม่อนุญาต ต้องแตะแจ้งเตือนเพื่อเริ่มฟังทุกครั้ง")
+            if (!state.backgroundAllowed) Action("อนุญาตให้ทำงานเบื้องหลัง") {
+                // Sideloaded safety feature (not on Play): the exemption is what lets Android 12+
+                // start the call listener when a scam call arrives.
+                @android.annotation.SuppressLint("BatteryLife")
+                val ok = runCatching {
+                    context.startActivity(android.content.Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS,
+                        android.net.Uri.fromParts("package", context.packageName, null)).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK))
+                }
+                ok.onFailure { onRefresh() }
+            }
             Spacer(Modifier.height(12.dp))
 
             // ---- speech model

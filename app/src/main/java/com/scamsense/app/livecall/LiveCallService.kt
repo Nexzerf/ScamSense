@@ -34,6 +34,7 @@ import com.scamsense.core.engine.TextNormalizer
 import com.scamsense.core.live.LiveCallMonitor
 import com.scamsense.core.live.SpeechChunker
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -71,7 +72,13 @@ class LiveCallService : Service() {
     private var monitor = LiveCallMonitor()
     private var caller = ""
     private var answered = false
+    private val phase = CallPhaseTracker()
+    private var watching = false
     private var finished = false
+    /** Whisper is CPU-heavy: give it its own thread so it never starves other coroutines. */
+    private val sttDispatcher = java.util.concurrent.Executors.newSingleThreadExecutor { r ->
+        Thread(r, "ScamSense-STT").apply { priority = Thread.NORM_PRIORITY - 1 }
+    }.asCoroutineDispatcher()
     private var callbackRegistration: Any? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
@@ -90,7 +97,8 @@ class LiveCallService : Service() {
     // ------------------------------------------------------------------ lifecycle
 
     private fun startWatching(display: String) {
-        if (answered) return
+        if (watching || finished) return // a second WATCH for the same call is ignored
+        watching = true
         caller = display
         ensureChannel(this)
         val n = buildNotification("ScamSense พร้อมฟังสายนี้", "สายจาก ${display.ifBlank { "เบอร์ที่ไม่รู้จัก" }} — จะเริ่มตรวจเมื่อรับสาย", RiskLevel.SAFE, false)
@@ -110,9 +118,10 @@ class LiveCallService : Service() {
     }
 
     private fun onCallState(state: Int) {
-        when (state) {
-            TelephonyManager.CALL_STATE_OFFHOOK -> if (!answered) { answered = true; timeoutJob?.cancel(); beginCapture() }
-            TelephonyManager.CALL_STATE_IDLE -> finish()
+        when (phase.on(state)) {
+            CallPhaseTracker.Event.ANSWERED -> { answered = true; timeoutJob?.cancel(); beginCapture() }
+            CallPhaseTracker.Event.ENDED -> finish()
+            CallPhaseTracker.Event.NONE -> Unit
         }
     }
 
@@ -124,14 +133,15 @@ class LiveCallService : Service() {
             if (!WhisperModels.isInstalled(this@LiveCallService, model) || !WhisperNative.isAvailable) {
                 notifyStatus("ยังฟังไม่ได้: ไม่มีโมเดลแปลงเสียง", RiskLevel.SUSPICIOUS, false); return@launch
             }
-            shizukuConn = ShizukuGate.bind(this@LiveCallService) { svc ->
+            // Shizuku binding and its callbacks belong on the main thread.
+            kotlinx.coroutines.withContext(Dispatchers.Main) { shizukuConn = ShizukuGate.bind(this@LiveCallService) { svc ->
                 if (svc == null) {
                     notifyStatus("ยังฟังไม่ได้: Shizuku ไม่ทำงาน", RiskLevel.SUSPICIOUS, false)
                 } else {
                     audio = svc
                     scope.launch { stream(svc, model) }
                 }
-            }
+            } }
         }
     }
 
@@ -173,7 +183,7 @@ class LiveCallService : Service() {
             chunker.flush()?.let { utterances.trySend(it) }
             utterances.close()
         }
-        sttJob = scope.launch {
+        sttJob = scope.launch(sttDispatcher) {
             val whisper = WhisperNative.load(WhisperModels.file(this@LiveCallService, model).path)
             if (whisper == null) {
                 notifyStatus("โหลดโมเดลแปลงเสียงไม่สำเร็จ", RiskLevel.SUSPICIOUS, false)
@@ -355,6 +365,7 @@ class LiveCallService : Service() {
         tts?.shutdown()
         ShizukuGate.unbind(this, shizukuConn)
         scope.cancel()
+        sttDispatcher.close()
         super.onDestroy()
     }
 
@@ -367,6 +378,7 @@ class LiveCallService : Service() {
         private const val CHANNEL_ID = "live_call"
         private const val NOTIFICATION_ID = 4101
         private const val SUMMARY_ID = 4102
+        private const val MANUAL_START_ID = 4103
         private const val SAMPLE_RATE = 16_000
         private const val RING_TIMEOUT_MS = 90_000L
         private const val HANG_UP_DELAY_MS = 4_000L
@@ -382,10 +394,35 @@ class LiveCallService : Service() {
         }
 
         /** Started by the call screening service for calls from numbers not in contacts. */
-        fun watch(context: Context, callerDisplay: String): Boolean = runCatching {
-            ContextCompat.startForegroundService(context,
-                Intent(context, LiveCallService::class.java).setAction(ACTION_WATCH).putExtra(EXTRA_CALLER, callerDisplay))
-            true
-        }.getOrDefault(false)
+        fun watch(context: Context, callerDisplay: String): Boolean {
+            val intent = Intent(context, LiveCallService::class.java).setAction(ACTION_WATCH).putExtra(EXTRA_CALLER, callerDisplay)
+            val started = runCatching { ContextCompat.startForegroundService(context, intent); true }.getOrDefault(false)
+            if (!started) offerManualStart(context, intent, callerDisplay)
+            return started
+        }
+
+        /**
+         * Android 12+ may refuse to start a foreground service from the background
+         * (unless the app is exempt from battery optimisation — the setup screen asks for
+         * that). Fall back to a notification: a tap is a user action, which is allowed.
+         */
+        private fun offerManualStart(context: Context, intent: Intent, callerDisplay: String) {
+            ensureChannel(context)
+            val pi = PendingIntent.getForegroundService(context, 9, intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+            val n = NotificationCompat.Builder(context, CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_stat_shield)
+                .setContentTitle("สายจาก ${callerDisplay.ifBlank { "เบอร์ที่ไม่รู้จัก" }}")
+                .setContentText("แตะเพื่อให้ ScamSense ฟังและตรวจสายนี้")
+                .setPriority(NotificationCompat.PRIORITY_MAX)
+                .setCategory(NotificationCompat.CATEGORY_CALL)
+                .setContentIntent(pi)
+                .setAutoCancel(true)
+                .build()
+            runCatching { context.getSystemService(NotificationManager::class.java)?.notify(MANUAL_START_ID, n) }
+        }
+
+        /** Exempt from battery optimisation = allowed to start the listener from the background. */
+        fun isBackgroundStartAllowed(context: Context): Boolean =
+            context.getSystemService(android.os.PowerManager::class.java)?.isIgnoringBatteryOptimizations(context.packageName) == true
     }
 }
