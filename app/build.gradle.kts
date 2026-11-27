@@ -24,12 +24,25 @@ android {
         applicationId = "com.scamsense.app"
         minSdk = 23          // Android 6.0+ (~99% of active devices); needed for Keystore AES-GCM
         targetSdk = 35
-        versionCode = 2
-        versionName = "1.1.0"
+        versionCode = 3
+        versionName = "1.2.0"
         vectorDrawables.useSupportLibrary = true
         @Suppress("UnstableApiUsage")
         resourceConfigurations += listOf("th", "en")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        ndk {
+            // Live call listening runs whisper.cpp natively. 32-bit ARM is kept so the app
+            // still installs on budget phones (live listening itself needs Android 11+).
+            abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64")
+        }
+    }
+
+    ndkVersion = "27.2.12479018"
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+            version = "3.22.1"
+        }
     }
 
     signingConfigs {
@@ -71,6 +84,7 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+        aidl = true
     }
 
     packaging {
@@ -108,6 +122,8 @@ kotlin {
 dependencies {
     implementation(project(":core"))
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.shizuku.api)
+    implementation(libs.shizuku.provider)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.lifecycle.runtime.compose)

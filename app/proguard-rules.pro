@@ -12,3 +12,9 @@
 # Keep line numbers for readable crash traces, but hide original source file names.
 -keepattributes SourceFile,LineNumberTable
 -renamesourcefileattribute SourceFile
+
+# Shizuku starts the call-audio helper by class name in a separate shell-uid process.
+-keep class com.scamsense.app.livecall.shell.** { *; }
+-keep class com.scamsense.app.livecall.ICallAudioService* { *; }
+# JNI entry points.
+-keep class com.scamsense.app.livecall.WhisperNative { native <methods>; *; }

@@ -23,12 +23,17 @@
 - **แจ้งเตือนผู้ดูแล** (SMS ที่เติมข้อความให้แล้ว), **โทร 1441**, **ส่งต่อทาง LINE**, **ฟังผลเป็นเสียง (TTS)**
 - **แชร์จากแอปอื่น / เลือกข้อความ → "ตรวจด้วย ScamSense"** ตรวจอัตโนมัติทันที
 - **ป้องกันสายโทร (Android 10+)** — กรองสายจากเบอร์ที่ไม่อยู่ในรายชื่อก่อนเครื่องดัง: บล็อก +697/+698 / เบอร์ที่รายงาน / (ต่างประเทศ ถ้าเปิด) และแจ้งเตือน
+- **ฟังระหว่างคุย (ทดลอง, ต้องใช้ Shizuku)** — ฟังเสียงปลายสายของเบอร์ไม่รู้จัก แปลงเป็นข้อความไทยในเครื่องด้วย whisper.cpp ถ้าพูดแบบมิจฉาชีพจะเตือนทันทีหรือวางสายให้อัตโนมัติ ([รายละเอียด](docs/LIVE_CALL.md))
 - **ผู้ช่วย AI รับสายแทน** — สายเบอร์แปลกถูกโอนให้ผู้ช่วยรับ → ถอดเสียงเป็นข้อความ → ตรวจด้วยเอนจินเดียวกัน → **วางสายมิจฉาชีพให้อัตโนมัติ + SMS เตือนลูกหลาน** หรือโอนสายที่ปลอดภัยเข้ามาพร้อมสรุปให้ฟัง ([รายละเอียด](docs/CALL_ASSISTANT.md))
 - ประวัติการตรวจแบบเข้ารหัส, ปรับขนาดตัวอักษร 3 ระดับ, ธีมมืด, หน้าโหลดแบรนด์ลื่นไหล
 
 ## Build
 
-ต้องมี JDK 17+ และ Android SDK (platform 35, build-tools 35)
+ต้องมี JDK 17+, Android SDK (platform 35, build-tools 35), NDK 27.2.12479018 และ CMake 3.22.1
+
+```bash
+git clone --recursive <repo>   # whisper.cpp อยู่ใน third_party/ เป็น submodule
+```
 
 ```bash
 echo "sdk.dir=/path/to/Android/sdk" > local.properties
@@ -60,3 +65,7 @@ keyPassword=...
 | ![](docs/screenshots/07_result_safe.png) | ![](docs/screenshots/08_transaction.png) | ![](docs/screenshots/09_history.png) | ![](docs/screenshots/10_settings.png) |
 | **Call guard** | **AI assistant paired** | **AI call log** | |
 | ![](docs/screenshots/12_call_guard.png) | ![](docs/screenshots/12b_call_guard_paired.png) | ![](docs/screenshots/13_call_log.png) | |
+
+## License
+
+ScamSense is free software under the **GNU GPL v3** (with the additional Section 7 terms inherited from ShizuCallRecorder) — see [LICENSE](LICENSE) and [NOTICE.md](NOTICE.md).

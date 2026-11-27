@@ -19,6 +19,7 @@ class ScamSenseApplication : Application() {
  * add startup time and APK size.
  */
 class AppContainer(context: Context) {
+    val appContext: Context = context.applicationContext
     val analyzer: ScamAnalyzer by lazy { ScamAnalyzer() }
     val settingsRepository = SettingsRepository(secureStore(context, "settings.bin"))
     val historyRepository = HistoryRepository(secureStore(context, "history.bin"))

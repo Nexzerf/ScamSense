@@ -5,6 +5,7 @@ import android.telecom.Call
 import android.telecom.CallScreeningService
 import androidx.annotation.RequiresApi
 import com.scamsense.app.ScamSenseApplication
+import com.scamsense.app.livecall.LiveCallService
 import com.scamsense.core.calls.CallGuard
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -64,6 +65,12 @@ class ScamCallScreeningService : CallScreeningService() {
                 CallGuard.Action.BLOCK, CallGuard.Action.SEND_TO_ASSISTANT -> true
             }
             if (notify) CallNotifications.show(applicationContext, decision)
+            // Unknown caller allowed to ring: listen during the call if the user enabled it.
+            if (decision.action == CallGuard.Action.ALLOW_WITH_WARNING && settings?.liveGuardEnabled == true &&
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
+            ) {
+                LiveCallService.watch(applicationContext, decision.display)
+            }
         }
     }
 

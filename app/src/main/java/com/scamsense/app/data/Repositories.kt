@@ -43,6 +43,10 @@ data class AppSettings(
     /** User confirmed busy-forwarding to the assistant number was set up on the SIM. */
     val forwardingConfirmed: Boolean = false,
     val sendUnknownToAssistant: Boolean = true,
+    // ---- Live in-call listening (Shizuku + on-device speech recognition) ----
+    val liveGuardEnabled: Boolean = false,
+    val liveAutoHangUp: Boolean = true,
+    val liveModel: String = "small",
 ) {
     val hasCaregiver: Boolean get() = caregiverPhone.isNotBlank()
     val assistantPaired: Boolean get() = assistantToken.isNotBlank() && assistantServer.isNotBlank()
@@ -95,6 +99,9 @@ class SettingsRepository(private val store: BlobStore) {
         .put("assistantName", s.assistantName)
         .put("forwardingConfirmed", s.forwardingConfirmed)
         .put("sendUnknownToAssistant", s.sendUnknownToAssistant)
+        .put("liveGuardEnabled", s.liveGuardEnabled)
+        .put("liveAutoHangUp", s.liveAutoHangUp)
+        .put("liveModel", s.liveModel)
         .toString()
 
     private fun decode(json: String): AppSettings? = runCatching {
@@ -115,6 +122,9 @@ class SettingsRepository(private val store: BlobStore) {
             assistantName = o.optString("assistantName").take(60),
             forwardingConfirmed = o.optBoolean("forwardingConfirmed", false),
             sendUnknownToAssistant = o.optBoolean("sendUnknownToAssistant", true),
+            liveGuardEnabled = o.optBoolean("liveGuardEnabled", false),
+            liveAutoHangUp = o.optBoolean("liveAutoHangUp", true),
+            liveModel = o.optString("liveModel", "small").take(20),
         )
     }.getOrNull()
 

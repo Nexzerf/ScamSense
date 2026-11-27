@@ -118,6 +118,7 @@ private fun AppNavigation(vm: MainViewModel, nav: NavHostController = rememberNa
     val assistantCalls by vm.assistantCalls.collectAsStateWithLifecycle()
     val assistantBusy by vm.assistantBusy.collectAsStateWithLifecycle()
     val assistantMessage by vm.assistantMessage.collectAsStateWithLifecycle()
+    val modelDownload by vm.modelDownload.collectAsStateWithLifecycle()
 
     fun toast(msg: String) { scope.launch { snackbar.currentSnackbarData?.dismiss(); snackbar.showSnackbar(msg) } }
 
@@ -245,6 +246,8 @@ private fun AppNavigation(vm: MainViewModel, nav: NavHostController = rememberNa
                     onDialCode = { if (!Intents.dialCode(context, it)) toast("เปิดหน้าโทรศัพท์ไม่ได้") },
                     onOpenCallLog = { nav.navigate(Routes.CALL_LOG) },
                     onBack = { nav.popBackStack() },
+                    modelDownload = modelDownload,
+                    onDownloadModel = vm::downloadModel,
                 )
             }
             composable(Routes.CALL_LOG) {

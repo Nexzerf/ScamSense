@@ -9,6 +9,7 @@ navigation = "2.9.0"
 splashscreen = "1.0.1"
 junit = "4.13.2"
 robolectric = "4.14.1"
+shizuku = "13.1.5"
 androidxTestCore = "1.6.1"
 androidxTestExt = "1.2.1"
 serialization = "1.8.1"
@@ -36,6 +37,8 @@ androidx-test-core = { group = "androidx.test", name = "core", version.ref = "an
 androidx-test-ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidxTestExt" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "robolectric" }
+shizuku-api = { group = "dev.rikka.shizuku", name = "api", version.ref = "shizuku" }
+shizuku-provider = { group = "dev.rikka.shizuku", name = "provider", version.ref = "shizuku" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "serialization" }
 ktor-server-core = { group = "io.ktor", name = "ktor-server-core", version.ref = "ktor" }
 ktor-server-netty = { group = "io.ktor", name = "ktor-server-netty", version.ref = "ktor" }

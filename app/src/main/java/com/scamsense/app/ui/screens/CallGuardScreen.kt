@@ -92,6 +92,9 @@ fun CallGuardScreen(
     onDialCode: (String) -> Unit,
     onOpenCallLog: () -> Unit,
     onBack: () -> Unit,
+    modelDownload: Float? = null,
+    onDownloadModel: (com.scamsense.app.livecall.WhisperModel) -> Unit = {},
+    liveStateOverride: LiveGuardState? = null,
 ) {
     val context = LocalContext.current
     var refresh by remember { mutableIntStateOf(0) }
@@ -180,6 +183,10 @@ fun CallGuardScreen(
             } else {
                 AssistantCard(settings, onUpdate, onDialCode, onOpenCallLog, onUnpair)
             }
+
+            // ---------------------------------------------------------------- step 3: live listening
+            val liveState = liveStateOverride ?: rememberLiveGuardState(settings, refresh)
+            LiveGuardSection(settings, liveState, modelDownload, onUpdate, onDownloadModel, onRefresh = { refresh++ })
             Spacer(Modifier.size(12.dp))
         }
     }

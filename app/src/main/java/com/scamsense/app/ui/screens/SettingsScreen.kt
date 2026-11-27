@@ -250,6 +250,19 @@ fun SettingsScreen(
             }
         }
 
+        SectionTitle("เกี่ยวกับ")
+        SettingsCard {
+            Text("ScamSense เป็นซอฟต์แวร์เสรี (GNU GPL v3)", style = MaterialTheme.typography.titleSmall)
+            Spacer(Modifier.size(6.dp))
+            Text(
+                "This software is a fork of ShizuCallRecorder, available at https://github.com/kitsumed/ShizuCallRecorder. " +
+                    "ส่วนดึงเสียงสายดัดแปลงมาจาก CallVault (https://github.com/madkongo/CallVault) ซึ่งพัฒนาต่อจาก ShizuCallRecorder " +
+                    "เป็นฉบับแก้ไข ไม่ได้รับการรับรองจากผู้พัฒนาเดิม • แปลงเสียงด้วย whisper.cpp (MIT) • Shizuku API (Apache-2.0) • ฟอนต์ IBM Plex Sans Thai (OFL)",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+
         Text(
             "ScamSense เวอร์ชัน ${BuildConfig.VERSION_NAME}",
             style = MaterialTheme.typography.labelSmall,

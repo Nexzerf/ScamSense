@@ -1,0 +1,232 @@
+package com.scamsense.app.ui.screens
+
+import android.Manifest
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.rounded.Download
+import androidx.compose.material.icons.rounded.Hearing
+import androidx.compose.material.icons.rounded.PhoneInTalk
+import androidx.compose.material.icons.rounded.Terminal
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
+import androidx.lifecycle.compose.LifecycleResumeEffect
+import com.scamsense.app.data.AppSettings
+import com.scamsense.app.livecall.ShizukuGate
+import com.scamsense.app.livecall.WhisperModel
+import com.scamsense.app.livecall.WhisperModels
+import com.scamsense.app.livecall.WhisperNative
+import com.scamsense.app.ui.components.BigButton
+import com.scamsense.app.ui.components.BigOutlinedButton
+import com.scamsense.app.ui.components.SectionTitle
+import com.scamsense.app.ui.theme.riskColors
+import com.scamsense.core.engine.RiskLevel
+
+/** Readiness of each prerequisite; separated from Android calls so previews/tests can pass it in. */
+data class LiveGuardState(
+    val supported: Boolean,
+    val shizuku: ShizukuGate.Status,
+    val phonePermission: Boolean,
+    val modelInstalled: Boolean,
+    val nativeAvailable: Boolean,
+) {
+    val ready get() = supported && shizuku == ShizukuGate.Status.READY && phonePermission && modelInstalled && nativeAvailable
+}
+
+@Composable
+fun rememberLiveGuardState(settings: AppSettings, refreshKey: Any?): LiveGuardState {
+    val context = LocalContext.current
+    var tick by remember { mutableIntStateOf(0) }
+    LifecycleResumeEffect(Unit) { tick++; onPauseOrDispose { } }
+    return remember(tick, refreshKey, settings.liveModel) {
+        LiveGuardState(
+            supported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R,
+            shizuku = ShizukuGate.status(context),
+            phonePermission = ContextCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED,
+            modelInstalled = WhisperModels.isInstalled(context, WhisperModel.byId(settings.liveModel)),
+            nativeAvailable = WhisperNative.isAvailable,
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun LiveGuardSection(
+    settings: AppSettings,
+    state: LiveGuardState,
+    downloadProgress: Float?,
+    onUpdate: ((AppSettings) -> AppSettings) -> Unit,
+    onDownloadModel: (WhisperModel) -> Unit,
+    onRefresh: () -> Unit,
+) {
+    val context = LocalContext.current
+    val phoneLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { onRefresh() }
+
+    SectionTitle("3. ฟังระหว่างคุย (ทดลอง)")
+    Card(
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+    ) {
+        Column(Modifier.fillMaxWidth().padding(18.dp)) {
+            Text(
+                "เมื่อรับสายจากเบอร์ที่ไม่อยู่ในรายชื่อ ScamSense จะฟังเสียงปลายสาย แปลงเป็นข้อความในเครื่อง " +
+                    "ถ้าเจอคำของมิจฉาชีพจะเตือนทันที หรือวางสายให้ ไม่มีการบันทึกเสียงและไม่ส่งเสียงออกนอกเครื่อง",
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            if (!state.supported) {
+                Spacer(Modifier.height(10.dp))
+                Text("ต้องใช้ Android 11 ขึ้นไป", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.titleSmall)
+                return@Column
+            }
+            Spacer(Modifier.height(14.dp))
+
+            // ---- Shizuku
+            val shizukuOk = state.shizuku == ShizukuGate.Status.READY
+            Check(Icons.Rounded.Terminal, "Shizuku", shizukuOk, when (state.shizuku) {
+                ShizukuGate.Status.READY -> "พร้อมใช้งาน"
+                ShizukuGate.Status.NOT_INSTALLED -> "ยังไม่ได้ติดตั้ง (ให้ลูกหลานช่วยติดตั้งและเปิดครั้งแรก)"
+                ShizukuGate.Status.NOT_RUNNING -> "ยังไม่ได้เปิด — ต้องเปิดใหม่ทุกครั้งที่รีสตาร์ทเครื่อง"
+                ShizukuGate.Status.NO_PERMISSION -> "ยังไม่ได้อนุญาตให้ ScamSense ใช้"
+            })
+            when (state.shizuku) {
+                ShizukuGate.Status.NOT_INSTALLED -> Action("วิธีติดตั้ง Shizuku") {
+                    runCatching { context.startActivity(Intent(Intent.ACTION_VIEW, "https://shizuku.rikka.app/download/".toUri()).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+                }
+                ShizukuGate.Status.NOT_RUNNING -> Action("เปิดแอป Shizuku") { ShizukuGate.launchShizukuApp(context) }
+                ShizukuGate.Status.NO_PERMISSION -> Action("อนุญาตให้ใช้ Shizuku") { ShizukuGate.requestPermission { onRefresh() } }
+                ShizukuGate.Status.READY -> Unit
+            }
+            Spacer(Modifier.height(12.dp))
+
+            // ---- phone state permission
+            Check(Icons.Rounded.PhoneInTalk, "รู้ว่ารับสายหรือวางสายแล้ว", state.phonePermission,
+                if (state.phonePermission) "อนุญาตแล้ว" else "ต้องอนุญาต เพื่อเริ่มฟังตอนรับสาย")
+            if (!state.phonePermission) Action("อนุญาต") { phoneLauncher.launch(Manifest.permission.READ_PHONE_STATE) }
+            Spacer(Modifier.height(12.dp))
+
+            // ---- speech model
+            val model = WhisperModel.byId(settings.liveModel)
+            Check(Icons.Rounded.Hearing, "โมเดลแปลงเสียงภาษาไทย", state.modelInstalled && state.nativeAvailable, when {
+                !state.nativeAvailable -> "เครื่องนี้ไม่รองรับ"
+                state.modelInstalled -> "ติดตั้งแล้ว (${model.approxMb} MB)"
+                else -> "ยังไม่ได้ดาวน์โหลด"
+            })
+            Spacer(Modifier.height(8.dp))
+            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+                WhisperModel.entries.forEachIndexed { i, m ->
+                    SegmentedButton(
+                        selected = m == model,
+                        onClick = { onUpdate { it.copy(liveModel = m.id) } },
+                        shape = SegmentedButtonDefaults.itemShape(i, WhisperModel.entries.size),
+                        modifier = Modifier.heightIn(min = 48.dp),
+                    ) { Text(if (m == WhisperModel.SMALL) "แม่นยำ" else "เร็ว", style = MaterialTheme.typography.labelLarge) }
+                }
+            }
+            Text(model.label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (!state.modelInstalled && state.nativeAvailable) {
+                Spacer(Modifier.height(8.dp))
+                if (downloadProgress != null) {
+                    LinearProgressIndicator(progress = { downloadProgress }, modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(8.dp)))
+                    Text("กำลังดาวน์โหลด ${(downloadProgress * 100).toInt()}%", style = MaterialTheme.typography.bodySmall)
+                } else {
+                    BigOutlinedButton("ดาวน์โหลดโมเดล (${model.approxMb} MB, แนะนำ Wi-Fi)", icon = Icons.Rounded.Download, onClick = { onDownloadModel(model) })
+                }
+            }
+            Spacer(Modifier.height(14.dp))
+
+            // ---- switches
+            Toggle(
+                "เปิดฟังระหว่างคุย",
+                if (state.ready) "พร้อมทำงานกับสายถัดไปจากเบอร์ที่ไม่รู้จัก" else "ทำข้อด้านบนให้ครบก่อน และเปิด \"กรองสาย\" ในข้อ 1",
+                settings.liveGuardEnabled && state.ready, enabled = state.ready,
+            ) { v -> onUpdate { it.copy(liveGuardEnabled = v) } }
+            Toggle("วางสายให้อัตโนมัติเมื่อแน่ใจว่าเป็นมิจฉาชีพ", "นับถอยหลัง 4 วินาที แตะยกเลิกได้ ถ้าปิดไว้จะเตือนอย่างเดียว",
+                settings.liveAutoHangUp, enabled = true) { v -> onUpdate { it.copy(liveAutoHangUp = v) } }
+            Spacer(Modifier.height(10.dp))
+            Text(
+                "ส่วนดึงเสียงสายดัดแปลงจาก CallVault และ ShizuCallRecorder (GPL-3.0) • แปลงเสียงด้วย whisper.cpp (MIT)",
+                style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
+private fun Check(icon: ImageVector, title: String, ok: Boolean, subtitle: String) {
+    val c = riskColors(if (ok) RiskLevel.SAFE else RiskLevel.SUSPICIOUS)
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.size(40.dp).clip(CircleShape).background(c.container), contentAlignment = Alignment.Center) {
+            Icon(if (ok) Icons.Rounded.CheckCircle else icon, null, tint = c.main, modifier = Modifier.size(24.dp))
+        }
+        Spacer(Modifier.width(12.dp))
+        Column {
+            Text(title, style = MaterialTheme.typography.titleSmall)
+            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    }
+}
+
+@Composable
+private fun Action(label: String, onClick: () -> Unit) {
+    Spacer(Modifier.height(8.dp))
+    BigButton(label, onClick = onClick)
+}
+
+@Composable
+private fun Toggle(title: String, subtitle: String, checked: Boolean, enabled: Boolean, onChange: (Boolean) -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().toggleable(checked, enabled = enabled, role = Role.Switch, onValueChange = onChange).padding(vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.titleSmall,
+                color = if (enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Spacer(Modifier.width(10.dp))
+        Switch(checked = checked, onCheckedChange = null, enabled = enabled)
+    }
+}

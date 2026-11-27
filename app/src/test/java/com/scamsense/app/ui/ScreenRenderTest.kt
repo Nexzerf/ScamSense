@@ -23,6 +23,12 @@ import com.scamsense.core.engine.TransactionInput
 import com.scamsense.core.engine.TransactionSituation
 import com.scamsense.app.ui.screens.CallGuardScreen
 import com.scamsense.app.ui.screens.CallLogScreen
+import com.scamsense.app.ui.screens.LiveGuardSection
+import com.scamsense.app.ui.screens.LiveGuardState
+import com.scamsense.app.livecall.ShizukuGate
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.unit.dp
 import com.scamsense.app.ui.screens.CheckScreen
 import com.scamsense.core.api.CallOutcome
 import com.scamsense.core.api.CallRecordDto
@@ -170,6 +176,19 @@ class ScreenRenderTest {
                 assistantNumber = "+6621234567", assistantName = "สมศรี", forwardingConfirmed = true),
             false, {}, { _, _ -> }, {}, {}, {}, {},
         )
+    }
+
+    @Test fun liveGuardSetup() = shoot("14_live_guard") {
+        androidx.compose.foundation.layout.Column(
+            androidx.compose.ui.Modifier.verticalScroll(androidx.compose.foundation.rememberScrollState()).padding(20.dp),
+        ) {
+            LiveGuardSection(
+                AppSettings(liveGuardEnabled = false),
+                LiveGuardState(supported = true, shizuku = ShizukuGate.Status.READY, phonePermission = true,
+                    modelInstalled = false, nativeAvailable = true),
+                downloadProgress = 0.42f, onUpdate = {}, onDownloadModel = {}, onRefresh = {},
+            )
+        }
     }
 
     @Test fun callLog() = shoot("13_call_log") {

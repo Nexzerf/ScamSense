@@ -61,6 +61,20 @@ class MainViewModel(private val container: AppContainer) : ViewModel() {
     private val _assistantMessage = MutableStateFlow<String?>(null)
     val assistantMessage: StateFlow<String?> = _assistantMessage.asStateFlow()
 
+    // ---- live listening model download
+    private val _modelDownload = MutableStateFlow<Float?>(null)
+    val modelDownload: StateFlow<Float?> = _modelDownload.asStateFlow()
+
+    fun downloadModel(model: com.scamsense.app.livecall.WhisperModel) {
+        if (_modelDownload.value != null) return
+        viewModelScope.launch {
+            _modelDownload.value = 0f
+            val r = com.scamsense.app.livecall.WhisperModels.download(container.appContext, model) { p -> _modelDownload.value = p }
+            _modelDownload.value = null
+            _assistantMessage.value = if (r.isSuccess) "ดาวน์โหลดโมเดลเสร็จแล้ว" else "ดาวน์โหลดไม่สำเร็จ ตรวจสอบอินเทอร์เน็ตแล้วลองใหม่"
+        }
+    }
+
     /** One-shot "go to the result screen" events. */
     private val _showResult = Channel<Unit>(Channel.CONFLATED)
     val showResult = _showResult.receiveAsFlow()
