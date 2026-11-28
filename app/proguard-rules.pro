@@ -13,8 +13,10 @@
 -keepattributes SourceFile,LineNumberTable
 -renamesourcefileattribute SourceFile
 
-# Shizuku starts the call-audio helper by class name in a separate shell-uid process.
+# The call-audio helper is started by class name (app_process main) in a shell-uid process.
 -keep class com.scamsense.app.livecall.shell.** { *; }
--keep class com.scamsense.app.livecall.ICallAudioService* { *; }
+# Shizuku.newProcess is private in Shizuku 13 and reached by reflection (see ShellAudio).
+-keep class rikka.shizuku.Shizuku { private static *** newProcess(...); }
+-keep class rikka.shizuku.ShizukuRemoteProcess { *; }
 # JNI entry points.
 -keep class com.scamsense.app.livecall.WhisperNative { native <methods>; *; }

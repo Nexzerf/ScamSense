@@ -19,22 +19,6 @@ import androidx.annotation.RequiresApi
 private const val TAG = "SS:Shell"
 
 /**
- * Shizuku starts the helper with the app's identity attached; audio capture from the shell
- * uid must not present itself as the app package, so the identity is detached.
- */
-// Hidden framework APIs are required here by design: this code runs in a bare shell-uid
-// process with no Application, which the public SDK cannot express. Failures are caught.
-@SuppressLint("PrivateApi", "DiscouragedPrivateApi")
-internal object ShellAttribution {
-    fun detachFromApp(): Boolean = runCatching {
-        val atCls = Class.forName("android.app.ActivityThread")
-        val thread = atCls.getMethod("currentActivityThread").invoke(null) ?: return true
-        atCls.getDeclaredField("mInitialApplication").apply { isAccessible = true }.set(thread, null)
-        true
-    }.onFailure { Log.w(TAG, "detach failed: ${it.javaClass.simpleName}") }.getOrDefault(false)
-}
-
-/**
  * Some vendor ROMs dereference the current Application inside AudioRecord. Give the bare
  * shell process a minimal Application that presents itself as com.android.shell.
  */

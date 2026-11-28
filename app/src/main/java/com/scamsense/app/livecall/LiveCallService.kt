@@ -8,14 +8,12 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
-import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.media.AudioAttributes
 import android.media.MediaRecorder
 import android.os.Build
 import android.os.IBinder
-import android.os.ParcelFileDescriptor
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.speech.tts.TextToSpeech
@@ -51,7 +49,7 @@ import java.util.Locale
  * Listens to the other party during a call from an unknown number and warns — or hangs
  * up — as soon as the conversation matches a scam script.
  *
- * Pipeline: Shizuku shell helper (VOICE_DOWNLINK PCM) → pipe → [SpeechChunker] →
+ * Pipeline: shell-uid helper process via Shizuku (VOICE_DOWNLINK PCM) → pipe → [SpeechChunker] →
  * whisper.cpp (Thai, on device) → [LiveCallMonitor] (same engine as the app) → action.
  * Audio is never written to storage; only the final verdict and a masked transcript
  * preview are kept in the encrypted history.
@@ -60,9 +58,7 @@ import java.util.Locale
 class LiveCallService : Service() {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
-    private var audio: ICallAudioService? = null
-    private var shizukuConn: ServiceConnection? = null
-    private var readPipe: ParcelFileDescriptor? = null
+    @Volatile private var audio: ShellAudio.Stream? = null
     private var captureJob: Job? = null
     private var sttJob: Job? = null
     private var timeoutJob: Job? = null
@@ -136,28 +132,28 @@ class LiveCallService : Service() {
             if (!WhisperModels.isInstalled(this@LiveCallService, model) || !WhisperNative.isAvailable) {
                 notifyStatus("ยังฟังไม่ได้: ไม่มีโมเดลแปลงเสียง", RiskLevel.SUSPICIOUS, false); return@launch
             }
-            // Shizuku binding and its callbacks belong on the main thread.
-            kotlinx.coroutines.withContext(Dispatchers.Main) { shizukuConn = ShizukuGate.bind(this@LiveCallService) { svc ->
-                if (svc == null) {
-                    notifyStatus("ยังฟังไม่ได้: Shizuku ไม่ทำงาน", RiskLevel.SUSPICIOUS, false)
-                } else {
-                    audio = svc
-                    scope.launch { stream(svc, model) }
+            if (ShizukuGate.status(this@LiveCallService) != ShizukuGate.Status.READY) {
+                notifyStatus("ยังฟังไม่ได้: Shizuku ไม่ทำงาน (ต้องเปิดใหม่หลังรีสตาร์ทเครื่อง)", RiskLevel.SUSPICIOUS, false); return@launch
+            }
+            val opened = kotlinx.coroutines.withContext(Dispatchers.IO) {
+                ShellAudio.open(this@LiveCallService, MediaRecorder.AudioSource.VOICE_DOWNLINK, SAMPLE_RATE)
+            }
+            when (opened) {
+                is ShellAudio.Opened.Failed -> notifyStatus(
+                    if (opened.reason == "no-audio-source") "เครื่องนี้ไม่อนุญาตให้ฟังเสียงในสาย"
+                    else "ยังฟังไม่ได้ (รหัส: ${opened.reason})",
+                    RiskLevel.SUSPICIOUS, false,
+                )
+                is ShellAudio.Opened.Ok -> {
+                    if (finished) { opened.stream.close(); return@launch } // call ended while starting
+                    audio = opened.stream
+                    stream(opened.stream, model)
                 }
-            } }
+            }
         }
     }
 
-    private suspend fun stream(svc: ICallAudioService, model: WhisperModel) {
-        val pipe = ParcelFileDescriptor.createPipe()
-        val used = runCatching { svc.startStream(MediaRecorder.AudioSource.VOICE_DOWNLINK, SAMPLE_RATE, pipe[1]) }.getOrDefault(-1)
-        runCatching { pipe[1].close() }
-        if (used < 0) {
-            runCatching { pipe[0].close() }
-            notifyStatus("เครื่องนี้ไม่อนุญาตให้ฟังเสียงในสาย", RiskLevel.SUSPICIOUS, false)
-            return
-        }
-        readPipe = pipe[0]
+    private fun stream(audioStream: ShellAudio.Stream, model: WhisperModel) {
         notifyStatus("กำลังฟังและตรวจสายนี้…", RiskLevel.SAFE, false)
         // Some phones hand the shell an all-zero stream for call audio. Say so instead of
         // staying silent, so the user knows this phone cannot be protected this way.
@@ -177,7 +173,7 @@ class LiveCallService : Service() {
             val shorts = ShortArray(bytes.size / 2 + 1)
             var carry = -1
             try {
-                ParcelFileDescriptor.AutoCloseInputStream(pipe[0]).use { input ->
+                audioStream.input.let { input ->
                     while (isActive) {
                         val n = input.read(bytes)
                         if (n < 0) break
@@ -245,8 +241,10 @@ class LiveCallService : Service() {
 
     private fun hangUpNow() {
         hangUpJob?.cancel()
-        val ok = runCatching { audio?.endCall() == true }.getOrDefault(false)
-        if (!ok) notifyStatus("วางสายอัตโนมัติไม่สำเร็จ กรุณากดวางสายเอง", RiskLevel.DANGEROUS, withActions = false)
+        scope.launch(Dispatchers.IO) {
+            val ok = ShellAudio.endCall()
+            if (!ok) notifyStatus("วางสายอัตโนมัติไม่สำเร็จ กรุณากดวางสายเอง", RiskLevel.DANGEROUS, withActions = false)
+        }
     }
 
     // ------------------------------------------------------------------ finish
@@ -256,12 +254,10 @@ class LiveCallService : Service() {
         finished = true
         scope.launch {
             silenceJob?.cancel()
-            runCatching { audio?.stopStream() }
-            runCatching { readPipe?.close() }
+            runCatching { audio?.close() }
             // Let the last utterances finish transcribing so the verdict is complete.
             withTimeoutOrNull(FINAL_STT_TIMEOUT_MS) { captureJob?.join(); sttJob?.join() }
             saveResult()
-            ShizukuGate.unbind(this@LiveCallService, shizukuConn)
             unregisterCallState()
             tts?.shutdown()
             ServiceCompat.stopForeground(this@LiveCallService, ServiceCompat.STOP_FOREGROUND_REMOVE)
@@ -384,7 +380,7 @@ class LiveCallService : Service() {
     override fun onDestroy() {
         unregisterCallState()
         tts?.shutdown()
-        ShizukuGate.unbind(this, shizukuConn)
+        runCatching { audio?.close() }
         scope.cancel()
         sttDispatcher.close()
         super.onDestroy()
