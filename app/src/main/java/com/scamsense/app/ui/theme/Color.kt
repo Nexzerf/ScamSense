@@ -7,22 +7,41 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import com.scamsense.core.engine.RiskLevel
 
-// Brand — a calm, trustworthy blue. All text/background pairs meet WCAG AA (most AAA).
-val Brand = Color(0xFF1E4FD8)
-val BrandDeep = Color(0xFF1638A8)
-val BrandLight = Color(0xFF8FB0FF)
+// "Night shield" palette: deep navy heroes with a soft electric-blue / mint / lime glow,
+// on airy blue-white pages. All text/background pairs meet WCAG AA (most AAA).
+val Navy950 = Color(0xFF060D22)
+val Navy900 = Color(0xFF0A1838)
+val Navy800 = Color(0xFF12275A)
+val Electric = Color(0xFF3D6BFF)
+val Sky = Color(0xFF9CC8FF)
+val Mint = Color(0xFF72E6C9)
+val Lime = Color(0xFFD5FF4D)
 
-val InkLight = Color(0xFF0F172A)
-val InkMutedLight = Color(0xFF475569)
+val Brand = Color(0xFF2D5BF0)
+val BrandDeep = Navy900
+val BrandLight = Color(0xFF9DB6FF)
+
+val InkLight = Color(0xFF0B1530)
+val InkMutedLight = Color(0xFF4A5876)
 val SurfaceLight = Color(0xFFFFFFFF)
-val BackgroundLight = Color(0xFFF4F6FB)
-val OutlineLight = Color(0xFFD5DBE7)
+val BackgroundLight = Color(0xFFEEF3FC)
+val OutlineLight = Color(0xFFD3DCEE)
 
-val InkDark = Color(0xFFE8EDF7)
-val InkMutedDark = Color(0xFFA7B2C7)
-val SurfaceDark = Color(0xFF131C31)
-val BackgroundDark = Color(0xFF0B1220)
-val OutlineDark = Color(0xFF2A3754)
+val InkDark = Color(0xFFE9EEF9)
+val InkMutedDark = Color(0xFFA9B5CF)
+val SurfaceDark = Color(0xFF101D3E)
+val BackgroundDark = Navy950
+val OutlineDark = Color(0xFF26375F)
+
+/** Deep two-tone background + glow accent for a verdict hero (text on it is white). */
+@Immutable
+data class RiskHero(val top: Color, val bottom: Color, val accent: Color)
+
+fun riskHero(level: RiskLevel): RiskHero = when (level) {
+    RiskLevel.SAFE -> RiskHero(Color(0xFF04201E), Color(0xFF0C5A4C), Mint)
+    RiskLevel.SUSPICIOUS -> RiskHero(Color(0xFF231404), Color(0xFF7A430A), Color(0xFFFFC651))
+    RiskLevel.DANGEROUS -> RiskHero(Color(0xFF2A0610), Color(0xFF8A1830), Color(0xFFFF7A7A))
+}
 
 @Immutable
 data class RiskColors(val main: Color, val onMain: Color, val container: Color, val onContainer: Color)

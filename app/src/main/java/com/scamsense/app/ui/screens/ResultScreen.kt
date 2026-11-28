@@ -82,7 +82,7 @@ import com.scamsense.core.engine.SignalCategory
 import com.scamsense.app.ui.components.BigButton
 import com.scamsense.app.ui.components.BigOutlinedButton
 import com.scamsense.app.ui.components.IconRow
-import com.scamsense.app.ui.components.RiskGauge
+import com.scamsense.app.ui.components.glowBackdrop
 import com.scamsense.app.ui.components.SectionTitle
 import com.scamsense.app.ui.theme.label
 import com.scamsense.app.ui.theme.riskColors
@@ -116,6 +116,7 @@ fun ResultScreen(
         if (result.level == RiskLevel.DANGEROUS) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
     }
 
+    val hero = com.scamsense.app.ui.theme.riskHero(result.level)
     Column(
         Modifier
             .fillMaxSize()
@@ -127,7 +128,7 @@ fun ResultScreen(
             Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(bottomStart = 36.dp, bottomEnd = 36.dp))
-                .background(colors.main)
+                .glowBackdrop(top = hero.bottom, bottom = hero.top, glowA = hero.accent, glowB = hero.accent)
                 .statusBarsPadding()
                 .padding(bottom = 28.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -147,7 +148,7 @@ fun ResultScreen(
                 }
             }
             if (result.shouldBlock) BlockBanner(colors.onMain)
-            RiskGauge(result.score, result.level, onColor = colors.onMain)
+            com.scamsense.app.ui.components.SegmentedGauge(result.score, result.level, hero.accent, onColor = Color.White)
             Text(
                 result.level.label(),
                 style = MaterialTheme.typography.headlineLarge,
@@ -285,9 +286,10 @@ private fun BlockBanner(onColor: Color) {
     val pulse by t.animateFloat(1f, 1.04f, infiniteRepeatable(tween(700), RepeatMode.Reverse), label = "pulse")
     Surface(
         modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp).scale(pulse),
-        shape = RoundedCornerShape(18.dp),
-        color = onColor.copy(alpha = 0.16f),
-        contentColor = onColor,
+        shape = RoundedCornerShape(30.dp),
+        // Solid coral pill with near-black wine text: unmistakable, AA contrast.
+        color = com.scamsense.app.ui.theme.riskHero(RiskLevel.DANGEROUS).accent,
+        contentColor = com.scamsense.app.ui.theme.riskHero(RiskLevel.DANGEROUS).top,
     ) {
         Row(Modifier.padding(horizontal = 18.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Rounded.Block, null, Modifier.size(28.dp))

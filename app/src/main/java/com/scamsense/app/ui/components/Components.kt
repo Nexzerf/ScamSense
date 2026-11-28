@@ -45,6 +45,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
@@ -91,41 +92,10 @@ fun BrandShield(modifier: Modifier = Modifier, shieldColor: Color = Color.White,
     }
 }
 
-/** 240° arc gauge that animates from 0 to [score]. */
+/** Score gauge (segmented arc); kept for existing call sites. */
 @Composable
-fun RiskGauge(score: Int, level: RiskLevel, modifier: Modifier = Modifier, diameter: Dp = 190.dp, onColor: Color = Color.White) {
-    val anim = remember { Animatable(0f) }
-    LaunchedEffect(score) {
-        anim.snapTo(0f)
-        anim.animateTo(score.toFloat(), tween(durationMillis = 900, easing = FastOutSlowInEasing))
-    }
-    // The arc spans 240°, so its lower ~20% is empty: crop the box height to avoid dead space.
-    Box(
-        modifier
-            .size(width = diameter, height = diameter * 0.82f)
-            .semantics { contentDescription = "คะแนนความเสี่ยง $score จาก 100 ระดับ${level.label()}" },
-        contentAlignment = Alignment.TopCenter,
-    ) {
-        Canvas(Modifier.wrapContentHeight(Alignment.Top, unbounded = true).requiredSize(diameter).padding(10.dp)) {
-            val stroke = 16.dp.toPx()
-            val arcSize = Size(size.width - stroke, size.height - stroke)
-            val topLeft = Offset(stroke / 2, stroke / 2)
-            drawArc(onColor.copy(alpha = 0.25f), 150f, 240f, false, topLeft, arcSize, style = Stroke(stroke, cap = StrokeCap.Round))
-            drawArc(onColor, 150f, 240f * (anim.value / 100f), false, topLeft, arcSize, style = Stroke(stroke, cap = StrokeCap.Round))
-        }
-        Column(
-            Modifier.padding(top = diameter * 0.27f),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(
-                anim.value.toInt().toString(),
-                style = MaterialTheme.typography.displayLarge,
-                color = onColor,
-                fontWeight = FontWeight.Bold,
-            )
-            Text("จาก 100", style = MaterialTheme.typography.labelLarge, color = onColor.copy(alpha = 0.85f))
-        }
-    }
+fun RiskGauge(score: Int, level: RiskLevel, modifier: Modifier = Modifier, diameter: Dp = 250.dp, onColor: Color = Color.White) {
+    SegmentedGauge(score, level, com.scamsense.app.ui.theme.riskHero(level).accent, modifier, diameter, onColor)
 }
 
 @Composable
@@ -155,7 +125,7 @@ fun BigButton(
         onClick = onClick,
         enabled = enabled,
         modifier = modifier.fillMaxWidth().heightIn(min = 64.dp),
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(32.dp),
         colors = ButtonDefaults.buttonColors(containerColor = containerColor, contentColor = contentColor),
         contentPadding = ButtonDefaults.ContentPadding,
     ) {
@@ -178,8 +148,8 @@ fun BigOutlinedButton(
     OutlinedButton(
         onClick = onClick,
         modifier = modifier.fillMaxWidth().heightIn(min = 60.dp),
-        shape = RoundedCornerShape(20.dp),
-        border = BorderStroke(1.5.dp, contentColor.copy(alpha = 0.6f)),
+        shape = RoundedCornerShape(32.dp),
+        border = BorderStroke(1.5.dp, contentColor.copy(alpha = 0.45f)),
         colors = ButtonDefaults.outlinedButtonColors(contentColor = contentColor),
     ) {
         if (icon != null) {
@@ -190,7 +160,7 @@ fun BigOutlinedButton(
     }
 }
 
-/** Large tappable tile for the home grid. */
+/** Large tappable tile for the home grid: frosted card, gradient icon chip. */
 @Composable
 fun ActionTile(
     title: String,
@@ -202,15 +172,18 @@ fun ActionTile(
 ) {
     Card(
         onClick = onClick,
-        modifier = modifier.heightIn(min = 150.dp),
-        shape = RoundedCornerShape(24.dp),
+        modifier = modifier.heightIn(min = 156.dp),
+        shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
         Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Box(
-                Modifier.size(52.dp).clip(RoundedCornerShape(16.dp)).background(tint.copy(alpha = 0.14f)),
+                Modifier
+                    .size(54.dp)
+                    .clip(RoundedCornerShape(18.dp))
+                    .background(Brush.linearGradient(listOf(tint.copy(alpha = 0.22f), tint.copy(alpha = 0.06f)))),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(30.dp))
@@ -239,15 +212,15 @@ fun AnalyzingIndicator(modifier: Modifier = Modifier, label: String = "กำล
     val ring by t.animateFloat(0f, 1f, infiniteRepeatable(tween(1300, easing = LinearEasing)), label = "ring")
     val primary = MaterialTheme.colorScheme.primary
     Column(modifier.semantics(mergeDescendants = true) { contentDescription = label }, horizontalAlignment = Alignment.CenterHorizontally) {
-        Box(Modifier.size(150.dp), contentAlignment = Alignment.Center) {
+        Box(Modifier.size(170.dp), contentAlignment = Alignment.Center) {
             Canvas(Modifier.fillMaxSize()) {
                 val r = size.minDimension / 2
-                drawCircle(primary.copy(alpha = (1f - ring) * 0.35f), radius = r * (0.55f + 0.45f * ring))
-                drawArc(primary, ring * 360f, 90f, false, style = Stroke(5.dp.toPx(), cap = StrokeCap.Round),
-                    topLeft = Offset(6.dp.toPx(), 6.dp.toPx()), size = Size(size.width - 12.dp.toPx(), size.height - 12.dp.toPx()))
+                drawArc(primary, ring * 360f, 80f, false, style = Stroke(4.dp.toPx(), cap = StrokeCap.Round),
+                    topLeft = Offset(4.dp.toPx(), 4.dp.toPx()), size = Size(size.width - 8.dp.toPx(), size.height - 8.dp.toPx()))
+                drawCircle(primary.copy(alpha = (1f - ring) * 0.25f), radius = r * (0.55f + 0.4f * ring))
             }
-            Box(Modifier.size(84.dp).scale(pulse).clip(CircleShape).background(primary), contentAlignment = Alignment.Center) {
-                BrandShield(Modifier.size(50.dp), shieldColor = Color.White, checkColor = primary)
+            Box(Modifier.size(132.dp).clip(CircleShape).glowBackdrop(), contentAlignment = Alignment.Center) {
+                ShieldOrb(size = 124.dp, pulse = pulse)
             }
         }
         Spacer(Modifier.size(16.dp))

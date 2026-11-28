@@ -47,9 +47,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.scamsense.app.StartupState
-import com.scamsense.app.ui.components.BrandShield
-import com.scamsense.app.ui.theme.Brand
-import com.scamsense.app.ui.theme.BrandDeep
+import com.scamsense.app.ui.components.ShieldOrb
+import com.scamsense.app.ui.components.glowBackdrop
+import com.scamsense.app.ui.theme.Lime
 
 /**
  * Branded loading screen shown while encrypted data is opened and the detection engine
@@ -65,7 +65,7 @@ fun LoadingScreen(state: StartupState, modifier: Modifier = Modifier) {
     Box(
         modifier
             .fillMaxSize()
-            .background(Brush.verticalGradient(listOf(Brand, BrandDeep))),
+            .glowBackdrop(),
     ) {
         Column(
             Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(32.dp),
@@ -73,27 +73,17 @@ fun LoadingScreen(state: StartupState, modifier: Modifier = Modifier) {
             verticalArrangement = Arrangement.Center,
         ) {
             Spacer(Modifier.weight(1f))
-            Box(Modifier.size(200.dp), contentAlignment = Alignment.Center) {
+            Box(Modifier.size(220.dp), contentAlignment = Alignment.Center) {
                 Canvas(Modifier.fillMaxSize()) {
                     val r = size.minDimension / 2
-                    for (k in 0..2) {
-                        val phase = (ring + k / 3f) % 1f
-                        drawCircle(Color.White.copy(alpha = (1f - phase) * 0.22f), radius = r * (0.45f + 0.55f * phase))
-                    }
-                    drawCircle(Color.White.copy(alpha = 0.35f), radius = r * 0.62f, style = Stroke(2.dp.toPx()))
                     drawArc(
-                        Color.White, startAngle = ring * 360f - 90f, sweepAngle = 70f, useCenter = false,
-                        topLeft = androidx.compose.ui.geometry.Offset(r * 0.38f, r * 0.38f),
-                        size = androidx.compose.ui.geometry.Size(r * 1.24f, r * 1.24f),
-                        style = Stroke(4.dp.toPx(), cap = StrokeCap.Round),
+                        Lime, startAngle = ring * 360f - 90f, sweepAngle = 60f, useCenter = false,
+                        topLeft = androidx.compose.ui.geometry.Offset(r * 0.06f, r * 0.06f),
+                        size = androidx.compose.ui.geometry.Size(r * 1.88f, r * 1.88f),
+                        style = Stroke(3.dp.toPx(), cap = StrokeCap.Round),
                     )
                 }
-                Box(
-                    Modifier.size(104.dp).scale(breathe).clip(CircleShape).background(Color.White.copy(alpha = 0.12f)),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    BrandShield(Modifier.size(76.dp), shieldColor = Color.White, checkColor = Brand)
-                }
+                ShieldOrb(size = 196.dp, pulse = breathe)
             }
             Spacer(Modifier.height(28.dp))
             Text("ScamSense", style = MaterialTheme.typography.displaySmall, color = Color.White, fontWeight = FontWeight.Bold)
@@ -107,8 +97,8 @@ fun LoadingScreen(state: StartupState, modifier: Modifier = Modifier) {
             LinearProgressIndicator(
                 progress = { progress },
                 modifier = Modifier.fillMaxWidth(0.7f).height(8.dp).clip(RoundedCornerShape(8.dp)),
-                color = Color.White,
-                trackColor = Color.White.copy(alpha = 0.25f),
+                color = Lime,
+                trackColor = Color.White.copy(alpha = 0.18f),
                 strokeCap = StrokeCap.Round,
                 drawStopIndicator = {},
             )

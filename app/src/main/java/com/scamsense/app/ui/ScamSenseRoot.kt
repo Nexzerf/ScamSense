@@ -24,6 +24,15 @@ import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
@@ -56,7 +65,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.scamsense.app.MainViewModel
 import com.scamsense.core.engine.CheckType
-import com.scamsense.app.ui.components.BrandShield
+import com.scamsense.app.ui.components.glowBackdrop
 import com.scamsense.app.ui.theme.Brand
 import com.scamsense.app.ui.screens.CallGuardScreen
 import com.scamsense.app.ui.screens.CallLogScreen
@@ -159,11 +168,8 @@ private fun AppNavigation(vm: MainViewModel, nav: NavHostController = rememberNa
                 CenterAlignedTopAppBar(
                     title = {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                Modifier.size(34.dp).clip(CircleShape).background(Brand),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                BrandShield(Modifier.fillMaxSize().padding(6.dp), checkColor = Brand)
+                            Box(Modifier.size(38.dp).clip(CircleShape).glowBackdrop(), contentAlignment = Alignment.Center) {
+                                com.scamsense.app.ui.components.ShieldOrb(size = 36.dp)
                             }
                             Spacer(Modifier.width(10.dp))
                             Text("ScamSense", style = MaterialTheme.typography.titleLarge)
@@ -175,23 +181,17 @@ private fun AppNavigation(vm: MainViewModel, nav: NavHostController = rememberNa
         },
         bottomBar = {
             if (isTab) {
-                NavigationBar(containerColor = MaterialTheme.colorScheme.surface, tonalElevation = 0.dp) {
-                    tabs.forEach { tab ->
-                        NavigationBarItem(
-                            selected = route == tab.route,
-                            onClick = {
-                                nav.navigate(tab.route) {
-                                    popUpTo(nav.graph.findStartDestination().id) { saveState = true }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            },
-                            icon = { Icon(tab.icon, contentDescription = null, Modifier.size(28.dp)) },
-                            label = { Text(tab.label, style = MaterialTheme.typography.labelLarge) },
-                            colors = NavigationBarItemDefaults.colors(indicatorColor = MaterialTheme.colorScheme.primaryContainer),
-                        )
-                    }
-                }
+                FloatingTabBar(
+                    tabs = tabs.map { Triple(it.route, it.label, it.icon) },
+                    selected = route,
+                    onSelect = { r ->
+                        nav.navigate(r) {
+                            popUpTo(nav.graph.findStartDestination().id) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                )
             }
         },
         snackbarHost = { SnackbarHost(snackbar) },
@@ -301,6 +301,59 @@ private fun AppNavigation(vm: MainViewModel, nav: NavHostController = rememberNa
                     onCallHotline = { if (!Intents.dial(context, Intents.AOC_HOTLINE)) toast("เครื่องนี้โทรออกไม่ได้ กรุณาโทร 1441") },
                     onBlockNumber = { vm.blockNumber(it); toast("บันทึกเบอร์ $it ว่าเป็นมิจฉาชีพแล้ว") },
                 )
+            }
+        }
+    }
+}
+
+/**
+ * Floating pill tab bar. Every tab keeps its text label (older users read words, not icons);
+ * the selected tab is a filled navy pill.
+ */
+@Composable
+private fun FloatingTabBar(
+    tabs: List<Triple<String, String, androidx.compose.ui.graphics.vector.ImageVector>>,
+    selected: String?,
+    onSelect: (String) -> Unit,
+) {
+    val dark = MaterialTheme.colorScheme.background.luminance() < 0.3f
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+    ) {
+        androidx.compose.material3.Surface(
+            shape = RoundedCornerShape(36.dp),
+            color = MaterialTheme.colorScheme.surface,
+            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+            shadowElevation = 10.dp,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Row(Modifier.padding(6.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                tabs.forEach { (r, label, icon) ->
+                    val on = r == selected
+                    val bg = if (on) (if (dark) com.scamsense.app.ui.theme.Lime else com.scamsense.app.ui.theme.Navy900) else Color.Transparent
+                    val fg = when {
+                        on && dark -> com.scamsense.app.ui.theme.Navy900
+                        on -> Color.White
+                        else -> MaterialTheme.colorScheme.onSurfaceVariant
+                    }
+                    Column(
+                        Modifier
+                            .weight(1f)
+                            .clip(RoundedCornerShape(30.dp))
+                            .background(bg)
+                            .selectable(selected = on, role = androidx.compose.ui.semantics.Role.Tab, onClick = { onSelect(r) })
+                            .heightIn(min = 60.dp)
+                            .padding(vertical = 6.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                    ) {
+                        Icon(icon, contentDescription = null, tint = fg, modifier = Modifier.size(26.dp))
+                        Text(label, style = MaterialTheme.typography.labelMedium, color = fg, maxLines = 1)
+                    }
+                }
             }
         }
     }

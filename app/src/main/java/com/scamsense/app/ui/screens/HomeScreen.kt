@@ -53,10 +53,11 @@ import com.scamsense.core.engine.CheckType
 import com.scamsense.core.engine.RiskLevel
 import com.scamsense.core.engine.RiskResult
 import com.scamsense.app.ui.components.ActionTile
-import com.scamsense.app.ui.components.BrandShield
 import com.scamsense.app.ui.components.SectionTitle
-import com.scamsense.app.ui.theme.Brand
-import com.scamsense.app.ui.theme.BrandDeep
+import com.scamsense.app.ui.components.ShieldOrb
+import com.scamsense.app.ui.components.glowBackdrop
+import com.scamsense.app.ui.theme.Lime
+import com.scamsense.app.ui.theme.Navy900
 import com.scamsense.app.ui.theme.riskColors
 import java.util.Calendar
 
@@ -103,7 +104,7 @@ fun HomeScreen(
         Column {
             Text(greeting, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(
-                "มีข้อความน่าสงสัยไหม?",
+                "วันนี้มีอะไรน่าสงสัยไหม?",
                 style = MaterialTheme.typography.headlineMedium,
                 color = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.semantics { heading() },
@@ -133,7 +134,7 @@ fun HomeScreen(
         HotlineCard(onCallHotline)
 
         Card(
-            shape = RoundedCornerShape(24.dp),
+            shape = RoundedCornerShape(28.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
         ) {
             Row(Modifier.padding(18.dp), verticalAlignment = Alignment.Top) {
@@ -162,25 +163,26 @@ private fun HeroCard(onSpeak: () -> Unit, onType: () -> Unit) {
     Box(
         Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(28.dp))
-            .background(Brush.linearGradient(listOf(Brand, BrandDeep))),
+            .clip(RoundedCornerShape(32.dp))
+            .glowBackdrop(),
     ) {
-        Column(Modifier.padding(22.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Column(Modifier.padding(22.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.size(52.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.16f)), contentAlignment = Alignment.Center) {
-                    BrandShield(Modifier.size(34.dp), checkColor = Brand)
-                }
-                Spacer(Modifier.width(14.dp))
-                Column {
-                    Text("ให้ ScamSense ช่วยดู", style = MaterialTheme.typography.titleLarge, color = Color.White)
-                    Text("พูด พิมพ์ หรือวางข้อความที่ได้รับ", style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.88f))
+                ShieldOrb(size = 92.dp)
+                Spacer(Modifier.width(12.dp))
+                Column(Modifier.weight(1f)) {
+                    Text("ตรวจก่อนเชื่อ", style = MaterialTheme.typography.headlineMedium, color = Color.White)
+                    Text(
+                        "พูด พิมพ์ หรือวางข้อความที่ได้รับ ScamSense บอกได้ทันทีว่าน่าไว้ใจไหม",
+                        style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.82f),
+                    )
                 }
             }
             Button(
                 onClick = onSpeak,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 64.dp),
-                shape = RoundedCornerShape(20.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Brand),
+                modifier = Modifier.fillMaxWidth().heightIn(min = 66.dp),
+                shape = RoundedCornerShape(33.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Lime, contentColor = Navy900),
             ) {
                 Icon(Icons.Rounded.Mic, null, Modifier.size(28.dp))
                 Spacer(Modifier.width(10.dp))
@@ -188,10 +190,10 @@ private fun HeroCard(onSpeak: () -> Unit, onType: () -> Unit) {
             }
             OutlinedButton(
                 onClick = onType,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
-                shape = RoundedCornerShape(20.dp),
-                border = androidx.compose.foundation.BorderStroke(1.5.dp, Color.White.copy(alpha = 0.6f)),
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+                modifier = Modifier.fillMaxWidth().heightIn(min = 58.dp),
+                shape = RoundedCornerShape(29.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.28f)),
+                colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.White.copy(alpha = 0.10f), contentColor = Color.White),
             ) {
                 Icon(Icons.Rounded.Edit, null, Modifier.size(22.dp))
                 Spacer(Modifier.width(10.dp))
@@ -205,7 +207,7 @@ private fun HeroCard(onSpeak: () -> Unit, onType: () -> Unit) {
 private fun CaregiverCard(settings: AppSettings, onCall: () -> Unit, onSetup: () -> Unit) {
     Card(
         onClick = if (settings.hasCaregiver) onCall else onSetup,
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
@@ -244,7 +246,7 @@ private fun CallGuardCard(settings: AppSettings, onOpen: () -> Unit) {
     val c = riskColors(if (on) RiskLevel.SAFE else RiskLevel.SUSPICIOUS)
     Card(
         onClick = onOpen,
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
@@ -275,7 +277,7 @@ private fun HotlineCard(onCall: () -> Unit) {
     val danger = riskColors(RiskLevel.DANGEROUS)
     Card(
         onClick = onCall,
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(containerColor = danger.container),
     ) {
         Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {

@@ -17,8 +17,8 @@ import com.scamsense.app.data.ThemeMode
 private val LightColors = lightColorScheme(
     primary = Brand,
     onPrimary = Color.White,
-    primaryContainer = Color(0xFFDCE6FF),
-    onPrimaryContainer = Color(0xFF0A2472),
+    primaryContainer = Color(0xFFDDE6FF),
+    onPrimaryContainer = Color(0xFF0A1F66),
     secondary = Color(0xFF0E7490),
     onSecondary = Color.White,
     secondaryContainer = Color(0xFFD5F3FA),
@@ -27,14 +27,14 @@ private val LightColors = lightColorScheme(
     onBackground = InkLight,
     surface = SurfaceLight,
     onSurface = InkLight,
-    surfaceVariant = Color(0xFFEDF1F8),
+    surfaceVariant = Color(0xFFE8EFFB),
     onSurfaceVariant = InkMutedLight,
     surfaceContainerLowest = Color.White,
-    surfaceContainerLow = Color(0xFFF8FAFD),
-    surfaceContainer = Color(0xFFF1F4FA),
-    surfaceContainerHigh = Color(0xFFEAEFF7),
+    surfaceContainerLow = Color(0xFFF7FAFF),
+    surfaceContainer = Color(0xFFF0F5FD),
+    surfaceContainerHigh = Color(0xFFE7EEFA),
     outline = OutlineLight,
-    outlineVariant = Color(0xFFE6EAF2),
+    outlineVariant = Color(0xFFE2E9F6),
     error = Color(0xFFC81E1E),
 )
 
@@ -51,23 +51,23 @@ private val DarkColors = darkColorScheme(
     onBackground = InkDark,
     surface = SurfaceDark,
     onSurface = InkDark,
-    surfaceVariant = Color(0xFF1B2640),
+    surfaceVariant = Color(0xFF172650),
     onSurfaceVariant = InkMutedDark,
-    surfaceContainerLowest = Color(0xFF0E1628),
-    surfaceContainerLow = Color(0xFF111A2E),
-    surfaceContainer = Color(0xFF162036),
-    surfaceContainerHigh = Color(0xFF1B2640),
+    surfaceContainerLowest = Color(0xFF0A1430),
+    surfaceContainerLow = Color(0xFF0E1A3A),
+    surfaceContainer = Color(0xFF132147),
+    surfaceContainerHigh = Color(0xFF182A55),
     outline = OutlineDark,
-    outlineVariant = Color(0xFF223050),
+    outlineVariant = Color(0xFF1E2E57),
     error = Color(0xFFF87171),
 )
 
 val AppShapes = Shapes(
     extraSmall = RoundedCornerShape(8.dp),
     small = RoundedCornerShape(12.dp),
-    medium = RoundedCornerShape(18.dp),
-    large = RoundedCornerShape(24.dp),
-    extraLarge = RoundedCornerShape(32.dp),
+    medium = RoundedCornerShape(20.dp),
+    large = RoundedCornerShape(28.dp),
+    extraLarge = RoundedCornerShape(36.dp),
 )
 
 @Composable
