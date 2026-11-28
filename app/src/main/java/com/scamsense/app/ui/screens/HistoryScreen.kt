@@ -61,6 +61,7 @@ import com.scamsense.app.ui.components.ChoicePill
 import com.scamsense.app.ui.components.IconChip
 import com.scamsense.app.ui.components.ScoreRing
 import com.scamsense.app.ui.components.ShieldOrb
+import com.scamsense.app.ui.components.enterUp
 import com.scamsense.app.ui.components.glowBackdrop
 import com.scamsense.app.ui.theme.Lime
 import com.scamsense.app.ui.theme.Navy900
@@ -89,7 +90,10 @@ fun HistoryScreen(
         return
     }
 
-    val shown = remember(items, filter) { if (filter == null) items else items.filter { it.level == filter } }
+    // A filter whose level no longer has any entries falls back to "all".
+    val active = filter?.takeIf { f -> items.any { it.level == f } }
+    val shown = remember(items, active) { if (active == null) items else items.filter { it.level == active } }
+    val reveal = com.scamsense.app.ui.components.rememberFirstReveal()
     val groups = remember(shown) { shown.groupBy { dayLabel(it.analyzedAt) } }
 
     LazyColumn(
@@ -97,16 +101,16 @@ fun HistoryScreen(
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        item { SummaryHero(items) }
+        item { Box(Modifier.enterUp(0)) { SummaryHero(items) } }
         item {
             Row(
                 Modifier.horizontalScroll(rememberScrollState()).padding(vertical = 4.dp),
                 horizontalArrangement = Arrangement.spacedBy(10.dp),
             ) {
-                ChoicePill("ทั้งหมด ${items.size}", filter == null, { filter = null })
+                ChoicePill("ทั้งหมด ${items.size}", active == null, { filter = null })
                 listOf(RiskLevel.DANGEROUS, RiskLevel.SUSPICIOUS, RiskLevel.SAFE).forEach { level ->
                     val n = items.count { it.level == level }
-                    if (n > 0) ChoicePill("${level.label()} $n", filter == level, { filter = if (filter == level) null else level },
+                    if (n > 0) ChoicePill("${level.label()} $n", active == level, { filter = if (active == level) null else level },
                         leading = { Box(Modifier.size(10.dp).clip(CircleShape).background(riskHero(level).accent)) })
                 }
             }
@@ -116,7 +120,9 @@ fun HistoryScreen(
                 Text(day, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(top = 6.dp, start = 4.dp).semantics { heading() })
             }
-            items(rows, key = { it.analyzedAt }) { r -> HistoryRow(r) { onOpen(r) } }
+            items(rows, key = { it.analyzedAt }) { r ->
+                Box(Modifier.enterUp(2 + shown.indexOf(r), enabled = reveal).animateItem()) { HistoryRow(r) { onOpen(r) } }
+            }
         }
         item {
             OutlinedButton(
@@ -164,7 +170,7 @@ private fun SummaryHero(items: List<RiskResult>) {
     ) {
         Text("ประวัติการตรวจ", style = MaterialTheme.typography.titleMedium, color = Color.White.copy(alpha = 0.8f))
         Row(verticalAlignment = Alignment.Bottom) {
-            Text(items.size.toString(), style = MaterialTheme.typography.displayMedium, color = Color.White, fontWeight = FontWeight.Bold)
+            Text(com.scamsense.app.ui.components.countUp(items.size).toString(), style = MaterialTheme.typography.displayMedium, color = Color.White, fontWeight = FontWeight.Bold)
             Spacer(Modifier.width(8.dp))
             Text("ครั้ง", style = MaterialTheme.typography.titleLarge, color = Color.White, modifier = Modifier.padding(bottom = 8.dp))
         }
@@ -193,7 +199,7 @@ private fun StatPill(label: String, value: Int, accent: Color, modifier: Modifie
             Spacer(Modifier.width(6.dp))
             Text(label, style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.85f), maxLines = 1)
         }
-        Text(value.toString(), style = MaterialTheme.typography.headlineSmall, color = Color.White, fontWeight = FontWeight.Bold)
+        Text(com.scamsense.app.ui.components.countUp(value).toString(), style = MaterialTheme.typography.headlineSmall, color = Color.White, fontWeight = FontWeight.Bold)
     }
 }
 
@@ -250,7 +256,7 @@ private fun EmptyHistory(saveHistory: Boolean, onStartCheck: () -> Unit, modifie
         verticalArrangement = Arrangement.Center,
     ) {
         Box(Modifier.size(180.dp).clip(CircleShape).glowBackdrop(), contentAlignment = Alignment.Center) {
-            ShieldOrb(size = 168.dp)
+            ShieldOrb(size = 168.dp, pulse = com.scamsense.app.ui.components.breathing())
         }
         Spacer(Modifier.size(24.dp))
         Text("ยังไม่มีประวัติการตรวจ", style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center,

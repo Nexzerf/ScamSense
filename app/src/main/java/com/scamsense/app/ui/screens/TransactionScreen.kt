@@ -23,21 +23,29 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.Payments
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import com.scamsense.app.ui.components.GlowHeader
+import com.scamsense.app.ui.components.enterUp
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -68,14 +76,10 @@ fun TransactionScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("ตรวจก่อนโอนเงิน", style = MaterialTheme.typography.titleLarge) },
-                navigationIcon = {
-                    IconButton(onClick = onBack, modifier = Modifier.size(56.dp)) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "ย้อนกลับ")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
+            GlowHeader(
+                "ตรวจก่อนโอนเงิน", onBack,
+                subtitle = "ตอบ 3 ข้อ รู้ทันทีว่าเสี่ยงไหม",
+                icon = Icons.Rounded.Payments,
             )
         },
         containerColor = MaterialTheme.colorScheme.background,
@@ -89,23 +93,27 @@ fun TransactionScreen(
                 Modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                Text(
-                    "ตอบคำถามสั้น ๆ ก่อนกดโอน ระบบจะบอกว่าการโอนนี้เสี่ยงแค่ไหน",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                StepTitle(1, "จะโอนเท่าไร", Modifier.padding(top = 8.dp).enterUp(0))
                 OutlinedTextField(
                     value = amount,
                     onValueChange = { v -> amount = v.filter { it.isDigit() || it == '.' }.take(12) },
                     label = { Text("จำนวนเงิน (บาท)") },
                     singleLine = true,
-                    textStyle = MaterialTheme.typography.titleLarge,
+                    textStyle = MaterialTheme.typography.headlineSmall,
+                    prefix = { Text("฿ ", style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary) },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    shape = RoundedCornerShape(20.dp),
-                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                    ),
+                    modifier = Modifier.fillMaxWidth().enterUp(1),
                 )
+                StepTitle(2, "ผู้รับเงินเป็นใคร", Modifier.enterUp(2))
                 Card(
-                    shape = RoundedCornerShape(20.dp),
+                    modifier = Modifier.enterUp(2),
+                    shape = RoundedCornerShape(26.dp),
                     colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                 ) {
@@ -115,6 +123,8 @@ fun TransactionScreen(
                             .padding(18.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
+                        com.scamsense.app.ui.components.IconChip(Icons.Rounded.Person, MaterialTheme.colorScheme.primary)
+                        Spacer(Modifier.width(12.dp))
                         Column(Modifier.weight(1f)) {
                             Text("รู้จักผู้รับเงินเป็นการส่วนตัว", style = MaterialTheme.typography.titleSmall)
                             Text("เคยเจอตัวจริง หรือเป็นญาติ/เพื่อนที่ติดต่อได้", style = MaterialTheme.typography.bodySmall,
@@ -124,16 +134,25 @@ fun TransactionScreen(
                     }
                 }
 
-                SectionTitle("มีเหตุการณ์เหล่านี้ไหม")
-                Text("เลือกได้หลายข้อ", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                TransactionSituation.entries.forEach { s ->
+                StepTitle(3, "มีเหตุการณ์เหล่านี้ไหม", Modifier.enterUp(3))
+                Text(
+                    if (selected.isEmpty()) "เลือกได้หลายข้อ ถ้าไม่มีเลยก็ข้ามได้" else "เลือกแล้ว ${selected.size} ข้อ",
+                    style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.enterUp(3),
+                )
+                TransactionSituation.entries.forEachIndexed { idx, s ->
                     val checked = s.name in selected
+                    val border by androidx.compose.animation.animateColorAsState(
+                        if (checked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant, label = "b",
+                    )
+                    val fill by androidx.compose.animation.animateColorAsState(
+                        if (checked) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.55f) else MaterialTheme.colorScheme.surface, label = "f",
+                    )
                     Card(
-                        shape = RoundedCornerShape(18.dp),
-                        colors = CardDefaults.cardColors(
-                            containerColor = if (checked) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
-                        ),
-                        border = BorderStroke(1.dp, if (checked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant),
+                        modifier = Modifier.enterUp(4 + idx),
+                        shape = RoundedCornerShape(22.dp),
+                        colors = CardDefaults.cardColors(containerColor = fill),
+                        border = BorderStroke(if (checked) 2.dp else 1.dp, border),
                     ) {
                         Row(
                             Modifier.fillMaxWidth().heightIn(min = 60.dp)
@@ -143,7 +162,7 @@ fun TransactionScreen(
                                 .padding(horizontal = 12.dp, vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Checkbox(checked = checked, onCheckedChange = null)
+                            CheckDot(checked)
                             Spacer(Modifier.width(10.dp))
                             Text(s.label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
                         }
@@ -157,7 +176,12 @@ fun TransactionScreen(
                     minLines = 2,
                     maxLines = 5,
                     textStyle = MaterialTheme.typography.bodyLarge,
-                    shape = RoundedCornerShape(20.dp),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                    ),
                     modifier = Modifier.fillMaxWidth(),
                 )
 
@@ -178,5 +202,36 @@ fun TransactionScreen(
                 Spacer(Modifier.size(8.dp))
             }
         }
+    }
+}
+
+@Composable
+private fun StepTitle(n: Int, text: String, modifier: Modifier = Modifier) {
+    Row(modifier, verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            Modifier.size(30.dp).clip(androidx.compose.foundation.shape.CircleShape).background(com.scamsense.app.ui.theme.Navy900),
+            contentAlignment = Alignment.Center,
+        ) { Text("$n", style = MaterialTheme.typography.labelLarge, color = com.scamsense.app.ui.theme.Lime) }
+        Spacer(Modifier.width(10.dp))
+        Text(text, style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
+    }
+}
+
+/** Round check that fills and pops when ticked (bigger and clearer than a checkbox). */
+@Composable
+private fun CheckDot(checked: Boolean) {
+    val scale by androidx.compose.animation.core.animateFloatAsState(
+        if (checked) 1f else 0f, androidx.compose.animation.core.spring(dampingRatio = 0.5f, stiffness = 500f), label = "dot",
+    )
+    Box(
+        Modifier.size(30.dp).clip(androidx.compose.foundation.shape.CircleShape)
+            .border(2.dp, if (checked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline, androidx.compose.foundation.shape.CircleShape),
+        contentAlignment = Alignment.Center,
+    ) {
+        Box(
+            Modifier.size(30.dp).graphicsLayer { scaleX = scale; scaleY = scale }
+                .clip(androidx.compose.foundation.shape.CircleShape).background(MaterialTheme.colorScheme.primary),
+            contentAlignment = Alignment.Center,
+        ) { Icon(Icons.Rounded.Check, null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.size(20.dp)) }
     }
 }

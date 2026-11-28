@@ -28,6 +28,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.foundation.layout.height
+import androidx.compose.material.icons.rounded.PhoneLocked
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.automirrored.rounded.PhoneForwarded
 import androidx.compose.material.icons.rounded.CheckCircle
@@ -46,10 +48,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import com.scamsense.app.ui.components.GlowHeader
+import com.scamsense.app.ui.components.enterUp
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -108,14 +110,10 @@ fun CallGuardScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("ป้องกันสายโทร", style = MaterialTheme.typography.titleLarge) },
-                navigationIcon = {
-                    IconButton(onClick = onBack, modifier = Modifier.size(56.dp)) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "ย้อนกลับ")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
+            GlowHeader(
+                "ป้องกันสายโทร", onBack,
+                subtitle = "กรองสาย ฟังระหว่างคุย และผู้ช่วย AI",
+                icon = Icons.Rounded.PhoneLocked,
             )
         },
         containerColor = MaterialTheme.colorScheme.background,
@@ -125,15 +123,24 @@ fun CallGuardScreen(
                 .padding(horizontal = 20.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
+            ProgressOverview(
+                listOf(
+                    "กรองสาย" to screeningOn,
+                    "ผู้ช่วย AI" to settings.assistantPaired,
+                    "ฟังสาย" to settings.liveGuardEnabled,
+                ),
+                Modifier.padding(top = 8.dp).enterUp(0),
+            )
             Text(
-                "ScamSense ตรวจสายจากเบอร์ที่ไม่อยู่ในรายชื่อก่อนเครื่องดัง สายจากคนในรายชื่อผู้ติดต่อจะดังตามปกติเสมอ",
-                style = MaterialTheme.typography.bodyLarge,
+                "ตรวจเฉพาะสายจากเบอร์ที่ไม่อยู่ในรายชื่อ สายจากคนในรายชื่อผู้ติดต่อจะดังตามปกติเสมอ",
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.enterUp(1),
             )
 
             // ---------------------------------------------------------------- step 1
-            SectionTitle("1. เปิดการกรองสาย")
-            GuardCard {
+            com.scamsense.app.ui.components.StepHeader(1, "เปิดการกรองสาย", done = screeningOn, modifier = Modifier.enterUp(2))
+            GuardCard(Modifier.enterUp(2)) {
                 StatusRow(Icons.Rounded.Shield, "กรองสายก่อนเครื่องดัง", screeningOn,
                     if (screeningOn) "เปิดอยู่ — บล็อกเบอร์อันตรายให้อัตโนมัติ" else "ยังไม่ได้เปิด")
                 if (!screeningOn) {
@@ -160,8 +167,9 @@ fun CallGuardScreen(
                 }
             }
 
-            SectionTitle("ตัวเลือก")
-            GuardCard {
+            Text("ตัวเลือกการกรองสาย", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 6.dp).enterUp(3))
+            GuardCard(Modifier.enterUp(3)) {
                 ToggleRow("เตือนเมื่อมีสายจากเบอร์ไม่รู้จัก", "ขึ้นข้อความเตือนพร้อมวิธีสังเกตมิจฉาชีพ", settings.callWarnings) { v ->
                     onUpdate { it.copy(callWarnings = v) }
                 }
@@ -177,7 +185,7 @@ fun CallGuardScreen(
             }
 
             // ---------------------------------------------------------------- step 2: AI assistant
-            SectionTitle("2. ผู้ช่วย AI รับสายแทน")
+            com.scamsense.app.ui.components.StepHeader(2, "ผู้ช่วย AI รับสายแทน", done = settings.assistantPaired, modifier = Modifier.enterUp(4))
             if (!settings.assistantPaired) {
                 PairCard(assistantBusy, onPair)
             } else {
@@ -287,9 +295,10 @@ private fun AssistantCard(
 private const val CANCEL_ALL_CONDITIONAL_FORWARDING = "##004#"
 
 @Composable
-private fun GuardCard(content: @Composable () -> Unit) {
+private fun GuardCard(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     Card(
-        shape = RoundedCornerShape(24.dp),
+        modifier = modifier,
+        shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) { Column(Modifier.fillMaxWidth().padding(18.dp)) { content() } }
@@ -299,9 +308,7 @@ private fun GuardCard(content: @Composable () -> Unit) {
 private fun StatusRow(icon: ImageVector, title: String, ok: Boolean, subtitle: String) {
     val c = riskColors(if (ok) RiskLevel.SAFE else RiskLevel.SUSPICIOUS)
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.size(44.dp).clip(CircleShape).background(c.container), contentAlignment = Alignment.Center) {
-            Icon(if (ok) Icons.Rounded.CheckCircle else icon, null, tint = c.main, modifier = Modifier.size(26.dp))
-        }
+        com.scamsense.app.ui.components.IconChip(if (ok) Icons.Rounded.CheckCircle else icon, c.main)
         Spacer(Modifier.width(12.dp))
         Column {
             Text(title, style = MaterialTheme.typography.titleSmall)
@@ -322,5 +329,48 @@ private fun ToggleRow(title: String, subtitle: String, checked: Boolean, onChang
         }
         Spacer(Modifier.width(10.dp))
         Switch(checked = checked, onCheckedChange = null)
+    }
+}
+
+/** "Ready 2/3" overview with a segmented progress bar and one chip per protection layer. */
+@Composable
+private fun ProgressOverview(steps: List<Pair<String, Boolean>>, modifier: Modifier = Modifier) {
+    val done = steps.count { it.second }
+    val anim by androidx.compose.animation.core.animateFloatAsState(done / steps.size.toFloat(),
+        androidx.compose.animation.core.tween(800), label = "progress")
+    Card(
+        modifier = modifier,
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+    ) {
+        Column(Modifier.fillMaxWidth().padding(18.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("ระดับการป้องกัน", style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
+                Text("พร้อม $done/${steps.size}", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+            }
+            Spacer(Modifier.size(10.dp))
+            Box(Modifier.fillMaxWidth().height(10.dp).clip(RoundedCornerShape(5.dp)).background(MaterialTheme.colorScheme.surfaceVariant)) {
+                Box(
+                    Modifier.fillMaxWidth(anim).height(10.dp).clip(RoundedCornerShape(5.dp))
+                        .background(androidx.compose.ui.graphics.Brush.horizontalGradient(
+                            listOf(com.scamsense.app.ui.theme.Electric, com.scamsense.app.ui.theme.Mint))),
+                )
+            }
+            Spacer(Modifier.size(12.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                steps.forEach { (name, ok) ->
+                    val c = riskColors(if (ok) RiskLevel.SAFE else RiskLevel.SUSPICIOUS)
+                    Row(
+                        Modifier.weight(1f).clip(RoundedCornerShape(16.dp)).background(c.container).padding(horizontal = 8.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(if (ok) Icons.Rounded.CheckCircle else Icons.Rounded.Shield, null, tint = c.main, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(4.dp))
+                        Text(name, style = MaterialTheme.typography.labelSmall, color = c.onContainer, maxLines = 1)
+                    }
+                }
+            }
+        }
     }
 }

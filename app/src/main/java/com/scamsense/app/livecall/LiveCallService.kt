@@ -59,6 +59,7 @@ class LiveCallService : Service() {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     @Volatile private var audio: ShellAudio.Stream? = null
+    private val audioLock = Any()
     private var captureJob: Job? = null
     private var sttJob: Job? = null
     private var timeoutJob: Job? = null
@@ -70,7 +71,7 @@ class LiveCallService : Service() {
     private var answered = false
     private val phase = CallPhaseTracker()
     private var watching = false
-    private var finished = false
+    @Volatile private var finished = false
     /** Whisper is CPU-heavy: give it its own thread so it never starves other coroutines. */
     private val sttDispatcher = java.util.concurrent.Executors.newSingleThreadExecutor { r ->
         Thread(r, "ScamSense-STT").apply { priority = Thread.NORM_PRIORITY - 1 }
@@ -145,8 +146,10 @@ class LiveCallService : Service() {
                     RiskLevel.SUSPICIOUS, false,
                 )
                 is ShellAudio.Opened.Ok -> {
-                    if (finished) { opened.stream.close(); return@launch } // call ended while starting
-                    audio = opened.stream
+                    // The call may have ended while the helper was starting: hand the stream
+                    // over under the same lock finish() uses, so it is never left recording.
+                    val keep = synchronized(audioLock) { if (finished) false else { audio = opened.stream; true } }
+                    if (!keep) { opened.stream.close(); return@launch }
                     stream(opened.stream, model)
                 }
             }
@@ -250,11 +253,14 @@ class LiveCallService : Service() {
     // ------------------------------------------------------------------ finish
 
     private fun finish() {
-        if (finished) return
-        finished = true
+        val stream = synchronized(audioLock) {
+            if (finished) return
+            finished = true
+            audio
+        }
         scope.launch {
             silenceJob?.cancel()
-            runCatching { audio?.close() }
+            runCatching { stream?.close() }
             // Let the last utterances finish transcribing so the verdict is complete.
             withTimeoutOrNull(FINAL_STT_TIMEOUT_MS) { captureJob?.join(); sttJob?.join() }
             saveResult()

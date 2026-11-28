@@ -25,14 +25,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Lock
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.Clear
 import androidx.compose.material.icons.rounded.ContentPaste
 import androidx.compose.material.icons.rounded.ErrorOutline
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
@@ -40,11 +39,11 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import com.scamsense.app.ui.components.GlowHeader
+import com.scamsense.app.ui.components.enterUp
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -146,14 +145,10 @@ fun CheckScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text(copy.title, style = MaterialTheme.typography.titleLarge) },
-                navigationIcon = {
-                    IconButton(onClick = onBack, modifier = Modifier.size(56.dp)) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "ย้อนกลับ")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
+            GlowHeader(
+                copy.title, onBack,
+                subtitle = "ตรวจในเครื่อง ไม่ส่งข้อมูลออก",
+                icon = Icons.Rounded.Lock,
             )
         },
         snackbarHost = { SnackbarHost(snackbar) },
@@ -176,7 +171,8 @@ fun CheckScreen(
                         .padding(horizontal = 20.dp, vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
-                    Text(copy.hint, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(copy.hint, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 8.dp).enterUp(0))
 
                     OutlinedTextField(
                         value = text,
@@ -185,11 +181,16 @@ fun CheckScreen(
                             if (error != null) onClearError()
                         },
                         label = { Text(copy.label) },
-                        modifier = Modifier.fillMaxWidth().heightIn(min = if (type == CheckType.MESSAGE) 180.dp else 72.dp),
+                        modifier = Modifier.fillMaxWidth().heightIn(min = if (type == CheckType.MESSAGE) 180.dp else 72.dp).enterUp(1),
+                        colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = MaterialTheme.colorScheme.surface,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant,
+                        ),
                         textStyle = MaterialTheme.typography.bodyLarge,
                         minLines = if (type == CheckType.MESSAGE) 5 else 1,
                         maxLines = if (type == CheckType.MESSAGE) 12 else 3,
-                        shape = RoundedCornerShape(20.dp),
+                        shape = RoundedCornerShape(24.dp),
                         isError = error != null,
                         keyboardOptions = KeyboardOptions(
                             keyboardType = when (type) {
@@ -218,7 +219,7 @@ fun CheckScreen(
                         }
                     }
 
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.enterUp(2)) {
                         FilledTonalButton(
                             onClick = {
                                 val pasted = readClipboard(context)
@@ -229,8 +230,12 @@ fun CheckScreen(
                                     onClearError()
                                 }
                             },
-                            modifier = Modifier.weight(1f).heightIn(min = 56.dp),
-                            shape = RoundedCornerShape(18.dp),
+                            modifier = Modifier.weight(1f).heightIn(min = 58.dp),
+                            shape = RoundedCornerShape(29.dp),
+                            colors = androidx.compose.material3.ButtonDefaults.filledTonalButtonColors(
+                                containerColor = MaterialTheme.colorScheme.surface, contentColor = MaterialTheme.colorScheme.primary,
+                            ),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                         ) {
                             Icon(Icons.Rounded.ContentPaste, null)
                             Spacer(Modifier.width(8.dp))
@@ -238,8 +243,12 @@ fun CheckScreen(
                         }
                         FilledTonalButton(
                             onClick = { startVoice() },
-                            modifier = Modifier.weight(1f).heightIn(min = 56.dp),
-                            shape = RoundedCornerShape(18.dp),
+                            modifier = Modifier.weight(1f).heightIn(min = 58.dp),
+                            shape = RoundedCornerShape(29.dp),
+                            colors = androidx.compose.material3.ButtonDefaults.filledTonalButtonColors(
+                                containerColor = MaterialTheme.colorScheme.surface, contentColor = MaterialTheme.colorScheme.primary,
+                            ),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                         ) {
                             Icon(Icons.Rounded.Mic, null)
                             Spacer(Modifier.width(8.dp))
@@ -247,18 +256,17 @@ fun CheckScreen(
                         }
                     }
 
-                    BigButton("ตรวจสอบเลย", onClick = { submit() }, icon = Icons.Rounded.Search, enabled = text.isNotBlank())
+                    BigButton("ตรวจสอบเลย", onClick = { submit() }, icon = Icons.Rounded.Search, enabled = text.isNotBlank(),
+                        modifier = Modifier.enterUp(3))
 
-                    Text("ลองตัวอย่าง", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("ลองตัวอย่าง", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.enterUp(4))
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.enterUp(4),
+                    ) {
                         copy.examples.forEach { (label, sample) ->
-                            AssistChip(
-                                onClick = { text = sample; onClearError() },
-                                label = { Text(label, style = MaterialTheme.typography.labelMedium) },
-                                modifier = Modifier.heightIn(min = 48.dp),
-                                shape = RoundedCornerShape(14.dp),
-                                colors = AssistChipDefaults.assistChipColors(containerColor = MaterialTheme.colorScheme.surface),
-                            )
+                            com.scamsense.app.ui.components.ChoicePill(label, selected = text == sample, onClick = { text = sample; onClearError() })
                         }
                     }
                     Spacer(Modifier.size(8.dp))

@@ -121,10 +121,12 @@ fun BigButton(
     contentColor: Color = MaterialTheme.colorScheme.onPrimary,
     enabled: Boolean = true,
 ) {
+    val interaction = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
     Button(
         onClick = onClick,
         enabled = enabled,
-        modifier = modifier.fillMaxWidth().heightIn(min = 64.dp),
+        interactionSource = interaction,
+        modifier = modifier.fillMaxWidth().heightIn(min = 64.dp).pressScale(interaction),
         shape = RoundedCornerShape(32.dp),
         colors = ButtonDefaults.buttonColors(containerColor = containerColor, contentColor = contentColor),
         contentPadding = ButtonDefaults.ContentPadding,
@@ -145,9 +147,11 @@ fun BigOutlinedButton(
     icon: ImageVector? = null,
     contentColor: Color = MaterialTheme.colorScheme.primary,
 ) {
+    val interaction = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
     OutlinedButton(
         onClick = onClick,
-        modifier = modifier.fillMaxWidth().heightIn(min = 60.dp),
+        interactionSource = interaction,
+        modifier = modifier.fillMaxWidth().heightIn(min = 60.dp).pressScale(interaction),
         shape = RoundedCornerShape(32.dp),
         border = BorderStroke(1.5.dp, contentColor.copy(alpha = 0.45f)),
         colors = ButtonDefaults.outlinedButtonColors(contentColor = contentColor),
@@ -170,9 +174,11 @@ fun ActionTile(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val interaction = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
     Card(
         onClick = onClick,
-        modifier = modifier.heightIn(min = 156.dp),
+        interactionSource = interaction,
+        modifier = modifier.heightIn(min = 156.dp).pressScale(interaction),
         shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),

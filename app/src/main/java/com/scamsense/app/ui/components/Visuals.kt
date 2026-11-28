@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
@@ -33,6 +34,7 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -85,7 +87,9 @@ fun GlassCard(
     val colors = CardDefaults.cardColors(containerColor = container)
     val elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     if (onClick != null) {
-        Card(onClick = onClick, modifier = modifier, shape = shape, colors = colors, border = border, elevation = elevation) {
+        val interaction = androidx.compose.runtime.remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+        Card(onClick = onClick, modifier = modifier.pressScale(interaction), shape = shape, colors = colors, border = border,
+            elevation = elevation, interactionSource = interaction) {
             Column(Modifier.padding(20.dp), content = content)
         }
     } else {
@@ -226,6 +230,7 @@ fun ChoicePill(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     leading: (@Composable () -> Unit)? = null,
+    horizontalPadding: Dp = 18.dp,
 ) {
     val dark = MaterialTheme.colorScheme.background.luminanceCompat() < 0.3f
     val bg = when {
@@ -238,26 +243,48 @@ fun ChoicePill(
         selected -> Color.White
         else -> MaterialTheme.colorScheme.onSurface
     }
+    val interaction = androidx.compose.runtime.remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
     androidx.compose.material3.Surface(
         onClick = onClick,
+        interactionSource = interaction,
         shape = RoundedCornerShape(28.dp),
         color = bg,
         contentColor = fg,
         border = if (selected) null else BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         modifier = modifier
             .heightIn(min = 52.dp)
+            .pressScale(interaction, 0.94f)
             .semantics { this.selected = selected },
     ) {
         androidx.compose.foundation.layout.Row(
-            Modifier.padding(horizontal = 18.dp, vertical = 10.dp),
+            Modifier.padding(horizontal = horizontalPadding, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = androidx.compose.foundation.layout.Arrangement.Center,
         ) {
             leading?.invoke()
             if (leading != null) androidx.compose.foundation.layout.Spacer(Modifier.size(8.dp))
-            Text(text, style = MaterialTheme.typography.labelLarge, color = fg)
+            Text(text, style = MaterialTheme.typography.labelLarge, color = fg, maxLines = 1, softWrap = false)
         }
     }
 }
 
 private fun Color.luminanceCompat(): Float = this.luminance()
+
+/** Numbered step title: navy disc with the number, or a mint check when the step is done. */
+@Composable
+fun StepHeader(n: Int, title: String, done: Boolean = false, modifier: Modifier = Modifier) {
+    androidx.compose.foundation.layout.Row(modifier.padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            Modifier.size(32.dp).clip(androidx.compose.foundation.shape.CircleShape)
+                .drawBehind { drawRect(if (done) Mint else com.scamsense.app.ui.theme.Navy900) },
+            contentAlignment = Alignment.Center,
+        ) {
+            if (done) androidx.compose.material3.Icon(androidx.compose.material.icons.Icons.Rounded.Check, null,
+                tint = com.scamsense.app.ui.theme.Navy900, modifier = Modifier.size(20.dp))
+            else Text("$n", style = MaterialTheme.typography.labelLarge, color = Lime)
+        }
+        androidx.compose.foundation.layout.Spacer(Modifier.size(10.dp))
+        Text(title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.semantics { heading() })
+    }
+}

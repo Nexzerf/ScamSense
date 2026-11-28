@@ -78,6 +78,7 @@ import com.scamsense.app.data.ThemeMode
 import com.scamsense.app.ui.components.BigButton
 import com.scamsense.app.ui.components.IconChip
 import com.scamsense.app.ui.components.ShieldOrb
+import com.scamsense.app.ui.components.enterUp
 import com.scamsense.app.ui.components.glowBackdrop
 import com.scamsense.app.ui.theme.Lime
 import com.scamsense.app.ui.theme.Mint
@@ -116,10 +117,10 @@ fun SettingsScreen(
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         // ---------------------------------------------------------------- status hero
-        StatusHero(settings, guardOn)
+        Box(Modifier.enterUp(0)) { StatusHero(settings, guardOn) }
 
         // ---------------------------------------------------------------- caregiver
-        Group("ผู้ดูแล / ลูกหลาน") {
+        Group("ผู้ดูแล / ลูกหลาน", index = 1) {
             if (!editingCaregiver && settings.hasCaregiver) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     val initial = settings.caregiverName.trim().firstOrNull { it.isLetter() }?.toString() ?: "?"
@@ -190,7 +191,7 @@ fun SettingsScreen(
         }
 
         // ---------------------------------------------------------------- call guard
-        Group("ป้องกันสายโทร") {
+        Group("ป้องกันสายโทร", index = 2) {
             val c = riskColors(if (guardOn) RiskLevel.SAFE else RiskLevel.SUSPICIOUS)
             NavRow(
                 icon = Icons.Rounded.PhoneLocked, tint = c.main,
@@ -201,7 +202,7 @@ fun SettingsScreen(
         }
 
         // ---------------------------------------------------------------- display
-        Group("ขนาดตัวอักษร") {
+        Group("ขนาดตัวอักษร", index = 3) {
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 TextScale.entries.forEach { s ->
                     ChoiceTile(
@@ -217,7 +218,7 @@ fun SettingsScreen(
             }
         }
 
-        Group("ธีม") {
+        Group("ธีม", index = 4) {
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 ThemeMode.entries.forEach { m ->
                     ChoiceTile(
@@ -236,7 +237,7 @@ fun SettingsScreen(
         }
 
         // ---------------------------------------------------------------- block words
-        Group("คำที่ต้องการบล็อก") {
+        Group("คำที่ต้องการบล็อก", index = 5) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconChip(Icons.Rounded.Block, riskColors(RiskLevel.DANGEROUS).main)
                 Spacer(Modifier.width(12.dp))
@@ -285,7 +286,7 @@ fun SettingsScreen(
         }
 
         if (settings.blockedNumbers.isNotEmpty()) {
-            Group("เบอร์ที่รายงานไว้ (${settings.blockedNumbers.size})") {
+            Group("เบอร์ที่รายงานไว้ (${settings.blockedNumbers.size})", index = 6) {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     settings.blockedNumbers.forEach { n ->
                         InputChip(
@@ -302,7 +303,7 @@ fun SettingsScreen(
         }
 
         // ---------------------------------------------------------------- privacy
-        Group("ความเป็นส่วนตัว") {
+        Group("ความเป็นส่วนตัว", index = 7) {
             Row(
                 Modifier.fillMaxWidth()
                     .clip(RoundedCornerShape(20.dp))
@@ -337,7 +338,7 @@ fun SettingsScreen(
         }
 
         // ---------------------------------------------------------------- about
-        Group("เกี่ยวกับ") {
+        Group("เกี่ยวกับ", index = 8) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconChip(Icons.Rounded.Info, MaterialTheme.colorScheme.secondary)
                 Spacer(Modifier.width(12.dp))
@@ -366,7 +367,7 @@ private fun StatusHero(settings: AppSettings, guardOn: Boolean) {
         Modifier.fillMaxWidth().clip(RoundedCornerShape(32.dp)).glowBackdrop().padding(18.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        ShieldOrb(size = 84.dp)
+        ShieldOrb(size = 84.dp, pulse = com.scamsense.app.ui.components.breathing())
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text("การตั้งค่า", style = MaterialTheme.typography.headlineSmall, color = Color.White,
@@ -388,8 +389,8 @@ private fun StatusLine(ok: Boolean, text: String) {
 
 /** A titled frosted card. */
 @Composable
-private fun Group(title: String, content: @Composable ColumnScope.() -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+private fun Group(title: String, index: Int = 1, content: @Composable ColumnScope.() -> Unit) {
+    Column(Modifier.enterUp(index), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground,
             modifier = Modifier.padding(start = 6.dp, top = 6.dp).semantics { heading() })
         Card(

@@ -82,6 +82,7 @@ import com.scamsense.core.engine.SignalCategory
 import com.scamsense.app.ui.components.BigButton
 import com.scamsense.app.ui.components.BigOutlinedButton
 import com.scamsense.app.ui.components.IconRow
+import com.scamsense.app.ui.components.enterUp
 import com.scamsense.app.ui.components.glowBackdrop
 import com.scamsense.app.ui.components.SectionTitle
 import com.scamsense.app.ui.theme.label
@@ -147,7 +148,7 @@ fun ResultScreen(
                     Icon(Icons.Rounded.Close, contentDescription = "ปิด กลับหน้าหลัก", tint = colors.onMain)
                 }
             }
-            if (result.shouldBlock) BlockBanner(colors.onMain)
+            if (result.shouldBlock) BlockBanner(colors.onMain, blockText(result.type))
             com.scamsense.app.ui.components.SegmentedGauge(result.score, result.level, hero.accent, onColor = Color.White)
             Text(
                 result.level.label(),
@@ -166,14 +167,18 @@ fun ResultScreen(
                     .semantics { liveRegion = LiveRegionMode.Polite },
             )
             result.matchedScamType?.let { type ->
-                Surface(shape = CircleShape, color = colors.onMain.copy(alpha = 0.18f), contentColor = colors.onMain) {
-                    Text("ลักษณะ: $type", Modifier.padding(horizontal = 16.dp, vertical = 6.dp), style = MaterialTheme.typography.labelLarge)
+                Surface(
+                    shape = RoundedCornerShape(20.dp), color = colors.onMain.copy(alpha = 0.16f), contentColor = colors.onMain,
+                    modifier = Modifier.padding(horizontal = 24.dp),
+                ) {
+                    Text("ลักษณะ: $type", Modifier.padding(horizontal = 16.dp, vertical = 8.dp), style = MaterialTheme.typography.labelLarge,
+                        textAlign = TextAlign.Center)
                 }
             }
         }
 
         Column(
-            Modifier.padding(20.dp).navigationBarsPadding(),
+            Modifier.padding(20.dp).navigationBarsPadding().enterUp(2),
             verticalArrangement = Arrangement.spacedBy(18.dp),
         ) {
             // ------------------------------------------------------------- primary actions
@@ -281,7 +286,7 @@ fun ResultScreen(
 }
 
 @Composable
-private fun BlockBanner(onColor: Color) {
+private fun BlockBanner(onColor: Color, text: String) {
     val t = rememberInfiniteTransition(label = "block")
     val pulse by t.animateFloat(1f, 1.04f, infiniteRepeatable(tween(700), RepeatMode.Reverse), label = "pulse")
     Surface(
@@ -294,7 +299,7 @@ private fun BlockBanner(onColor: Color) {
         Row(Modifier.padding(horizontal = 18.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Rounded.Block, null, Modifier.size(28.dp))
             Spacer(Modifier.width(10.dp))
-            Text("หยุด! อย่าทำตามข้อความนี้", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(text, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -369,3 +374,11 @@ private fun spokenText(r: RiskResult): String = buildString {
 
 private fun formatTime(ms: Long): String =
     SimpleDateFormat("d MMM yyyy HH:mm", Locale("th", "TH")).format(Date(ms))
+
+/** The stop banner names the action to avoid for each kind of check. */
+private fun blockText(type: CheckType): String = when (type) {
+    CheckType.TRANSACTION -> "หยุด! อย่าเพิ่งโอนเงิน"
+    CheckType.PHONE -> "หยุด! อย่าคุยหรือโทรกลับเบอร์นี้"
+    CheckType.LINK -> "หยุด! อย่าเปิดลิงก์นี้"
+    CheckType.MESSAGE -> "หยุด! อย่าทำตามข้อความนี้"
+}

@@ -33,6 +33,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
@@ -201,10 +202,11 @@ private fun AppNavigation(vm: MainViewModel, nav: NavHostController = rememberNa
             navController = nav,
             startDestination = Routes.HOME,
             modifier = Modifier.padding(if (isTab) padding else androidx.compose.foundation.layout.PaddingValues()),
-            enterTransition = { fadeIn(tween(220)) + slideInHorizontally(tween(260)) { it / 12 } },
-            exitTransition = { fadeOut(tween(180)) },
-            popEnterTransition = { fadeIn(tween(220)) },
-            popExitTransition = { fadeOut(tween(180)) + slideOutHorizontally(tween(240)) { it / 12 } },
+            // Shared-axis style: the new page slides in a little and fades, the old one recedes.
+            enterTransition = { fadeIn(tween(300, delayMillis = 60)) + slideInHorizontally(tween(380, easing = com.scamsense.app.ui.components.EmphasizedEasing)) { it / 10 } },
+            exitTransition = { fadeOut(tween(160)) + slideOutHorizontally(tween(380, easing = com.scamsense.app.ui.components.EmphasizedEasing)) { -it / 20 } },
+            popEnterTransition = { fadeIn(tween(300, delayMillis = 60)) + slideInHorizontally(tween(380, easing = com.scamsense.app.ui.components.EmphasizedEasing)) { -it / 20 } },
+            popExitTransition = { fadeOut(tween(160)) + slideOutHorizontally(tween(380, easing = com.scamsense.app.ui.components.EmphasizedEasing)) { it / 10 } },
         ) {
             composable(Routes.HOME) {
                 HomeScreen(
@@ -339,12 +341,22 @@ private fun FloatingTabBar(
             Row(Modifier.padding(6.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 tabs.forEach { (r, label, icon) ->
                     val on = r == selected
-                    val bg = if (on) (if (dark) com.scamsense.app.ui.theme.Lime else com.scamsense.app.ui.theme.Navy900) else Color.Transparent
-                    val fg = when {
-                        on && dark -> com.scamsense.app.ui.theme.Navy900
-                        on -> Color.White
-                        else -> MaterialTheme.colorScheme.onSurfaceVariant
-                    }
+                    val bg by androidx.compose.animation.animateColorAsState(
+                        if (on) (if (dark) com.scamsense.app.ui.theme.Lime else com.scamsense.app.ui.theme.Navy900) else Color.Transparent,
+                        tween(260), label = "tabBg",
+                    )
+                    val fg by androidx.compose.animation.animateColorAsState(
+                        when {
+                            on && dark -> com.scamsense.app.ui.theme.Navy900
+                            on -> Color.White
+                            else -> MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                        tween(260), label = "tabFg",
+                    )
+                    // Selected icon pops slightly (spring overshoot).
+                    val iconScale by androidx.compose.animation.core.animateFloatAsState(
+                        if (on) 1.12f else 1f, androidx.compose.animation.core.spring(dampingRatio = 0.45f, stiffness = 500f), label = "tabIcon",
+                    )
                     Column(
                         Modifier
                             .weight(1f)
@@ -356,7 +368,8 @@ private fun FloatingTabBar(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.Center,
                     ) {
-                        Icon(icon, contentDescription = null, tint = fg, modifier = Modifier.size(26.dp))
+                        Icon(icon, contentDescription = null, tint = fg,
+                            modifier = Modifier.size(26.dp).graphicsLayer { scaleX = iconScale; scaleY = iconScale })
                         Text(label, style = MaterialTheme.typography.labelMedium, color = fg, maxLines = 1)
                     }
                 }

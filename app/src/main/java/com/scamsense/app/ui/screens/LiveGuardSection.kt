@@ -7,6 +7,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -65,6 +66,7 @@ import com.scamsense.app.livecall.WhisperNative
 import com.scamsense.app.ui.components.BigButton
 import com.scamsense.app.ui.components.BigOutlinedButton
 import com.scamsense.app.ui.components.SectionTitle
+import com.scamsense.app.ui.components.enterUp
 import com.scamsense.app.ui.theme.riskColors
 import com.scamsense.core.engine.RiskLevel
 
@@ -112,9 +114,11 @@ fun LiveGuardSection(
     val context = LocalContext.current
     val phoneLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { onRefresh() }
 
-    SectionTitle("3. ฟังระหว่างคุย (ทดลอง)")
+    com.scamsense.app.ui.components.StepHeader(3, "ฟังระหว่างคุย (ทดลอง)", done = settings.liveGuardEnabled && state.ready,
+        modifier = Modifier.enterUp(5))
     Card(
-        shape = RoundedCornerShape(24.dp),
+        modifier = Modifier.enterUp(5),
+        shape = RoundedCornerShape(28.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
@@ -177,19 +181,18 @@ fun LiveGuardSection(
                 else -> "ยังไม่ได้ดาวน์โหลด"
             })
             Spacer(Modifier.height(8.dp))
-            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
-                WhisperModel.entries.forEachIndexed { i, m ->
-                    SegmentedButton(
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                WhisperModel.entries.forEach { m ->
+                    com.scamsense.app.ui.components.ChoicePill(
+                        when (m) { WhisperModel.SMALL -> "แม่นยำ"; WhisperModel.BASE -> "เร็ว"; WhisperModel.THAI -> "ภาษาไทย" },
                         selected = m == model,
                         onClick = { onUpdate { it.copy(liveModel = m.id) } },
-                        shape = SegmentedButtonDefaults.itemShape(i, WhisperModel.entries.size),
-                        modifier = Modifier.heightIn(min = 48.dp),
-                    ) {
-                        Text(when (m) { WhisperModel.SMALL -> "แม่นยำ"; WhisperModel.BASE -> "เร็ว"; WhisperModel.THAI -> "ภาษาไทย" },
-                            style = MaterialTheme.typography.labelLarge)
-                    }
+                        modifier = Modifier.weight(1f),
+                        horizontalPadding = 6.dp,
+                    )
                 }
             }
+            Spacer(Modifier.height(6.dp))
             Text(model.label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             if (!state.modelInstalled && state.nativeAvailable) {
                 Spacer(Modifier.height(8.dp))

@@ -90,7 +90,10 @@ fun ScamSenseTheme(
     val density = LocalDensity.current
     // Cap the combined scale so layouts stay usable at the system's largest font size.
     val combined = (density.fontScale * textScale).coerceAtMost(2.0f)
-    CompositionLocalProvider(LocalDensity provides Density(density.density, combined)) {
+    CompositionLocalProvider(
+        LocalDensity provides Density(density.density, combined),
+        com.scamsense.app.ui.components.LocalReduceMotion provides com.scamsense.app.ui.components.rememberReduceMotion(),
+    ) {
         MaterialTheme(
             colorScheme = if (darkTheme) DarkColors else LightColors,
             typography = AppTypography,

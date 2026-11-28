@@ -16,9 +16,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.SupportAgent
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.rounded.CallEnd
 import androidx.compose.material.icons.rounded.DeleteSweep
@@ -36,10 +38,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import com.scamsense.app.ui.components.GlowHeader
+import com.scamsense.app.ui.components.enterUp
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -70,20 +72,18 @@ fun CallLogScreen(
 ) {
     var confirm by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { onRefresh() }
+    val reveal = com.scamsense.app.ui.components.rememberFirstReveal()
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("สายที่ผู้ช่วยรับแทน", style = MaterialTheme.typography.titleLarge) },
-                navigationIcon = {
-                    IconButton(onClick = onBack, modifier = Modifier.size(56.dp)) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "ย้อนกลับ")
-                    }
-                },
+            GlowHeader(
+                "สายที่ผู้ช่วยรับแทน", onBack,
+                subtitle = "AI คุยกับเบอร์แปลกแทน แล้วสรุปให้",
+                icon = Icons.Rounded.SupportAgent,
                 actions = {
-                    IconButton(onClick = onRefresh, modifier = Modifier.size(56.dp)) { Icon(Icons.Rounded.Refresh, "รีเฟรช") }
-                    IconButton(onClick = { confirm = true }, modifier = Modifier.size(56.dp)) { Icon(Icons.Rounded.DeleteSweep, "ลบทั้งหมด") }
+                    com.scamsense.app.ui.components.GlassIconButton(Icons.Rounded.Refresh, "รีเฟรช", onRefresh)
+                    Spacer(Modifier.width(8.dp))
+                    com.scamsense.app.ui.components.GlassIconButton(Icons.Rounded.DeleteSweep, "ลบทั้งหมด") { confirm = true }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
             )
         },
         containerColor = MaterialTheme.colorScheme.background,
@@ -96,7 +96,7 @@ fun CallLogScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {
-                    Icon(Icons.Rounded.SmartToy, null, Modifier.size(64.dp), tint = MaterialTheme.colorScheme.primary)
+                    com.scamsense.app.ui.components.IconChip(Icons.Rounded.SmartToy, MaterialTheme.colorScheme.primary, size = 88.dp)
                     Spacer(Modifier.size(12.dp))
                     Text("ยังไม่มีสายที่ผู้ช่วยรับแทน", style = MaterialTheme.typography.titleLarge)
                     Text("เมื่อมีสายจากเบอร์ไม่รู้จัก ผู้ช่วยจะรับและสรุปให้ที่นี่",
@@ -108,7 +108,7 @@ fun CallLogScreen(
                     contentPadding = PaddingValues(20.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    items(calls, key = { it.id }) { CallCard(it) }
+                    itemsIndexed(calls, key = { _, c -> c.id }) { i, c -> androidx.compose.foundation.layout.Box(Modifier.enterUp(i, enabled = reveal).animateItem()) { CallCard(c) } }
                 }
             }
         }
@@ -140,7 +140,7 @@ private fun CallCard(c: CallRecordDto) {
     var expanded by rememberSaveable(c.id) { mutableStateOf(c.outcome == CallOutcome.BLOCKED) }
     Card(
         onClick = { expanded = !expanded },
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(26.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         modifier = Modifier.fillMaxWidth().animateContentSize(),

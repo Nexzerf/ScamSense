@@ -55,6 +55,7 @@ import com.scamsense.core.engine.RiskResult
 import com.scamsense.app.ui.components.ActionTile
 import com.scamsense.app.ui.components.SectionTitle
 import com.scamsense.app.ui.components.ShieldOrb
+import com.scamsense.app.ui.components.enterUp
 import com.scamsense.app.ui.components.glowBackdrop
 import com.scamsense.app.ui.theme.Lime
 import com.scamsense.app.ui.theme.Navy900
@@ -101,7 +102,7 @@ fun HomeScreen(
         verticalArrangement = Arrangement.spacedBy(20.dp),
     ) {
         Spacer(Modifier.height(4.dp))
-        Column {
+        Column(Modifier.enterUp(0)) {
             Text(greeting, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(
                 "วันนี้มีอะไรน่าสงสัยไหม?",
@@ -111,29 +112,32 @@ fun HomeScreen(
             )
         }
 
-        HeroCard(onSpeak = { onCheck(CheckType.MESSAGE, true) }, onType = { onCheck(CheckType.MESSAGE, false) })
+        Box(Modifier.enterUp(1)) {
+            HeroCard(onSpeak = { onCheck(CheckType.MESSAGE, true) }, onType = { onCheck(CheckType.MESSAGE, false) })
+        }
 
-        SectionTitle("เลือกสิ่งที่ต้องการตรวจ")
-        Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+        SectionTitle("เลือกสิ่งที่ต้องการตรวจ", Modifier.enterUp(2))
+        Row(horizontalArrangement = Arrangement.spacedBy(14.dp), modifier = Modifier.enterUp(3)) {
             ActionTile("ข้อความ", "SMS, LINE, แชท", Icons.Rounded.Sms, Color(0xFF2563EB),
                 { onCheck(CheckType.MESSAGE, false) }, Modifier.weight(1f))
             ActionTile("ลิงก์", "เว็บที่ถูกส่งมา", Icons.Rounded.Link, Color(0xFF7C3AED),
                 { onCheck(CheckType.LINK, false) }, Modifier.weight(1f))
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(14.dp), modifier = Modifier.enterUp(4)) {
             ActionTile("เบอร์โทร", "เบอร์ที่โทรเข้ามา", Icons.Rounded.PhoneInTalk, Color(0xFF0E7490),
                 { onCheck(CheckType.PHONE, false) }, Modifier.weight(1f))
             ActionTile("การโอนเงิน", "ก่อนกดโอน ตรวจก่อน", Icons.Rounded.Payments, Color(0xFFB45309),
                 onTransaction, Modifier.weight(1f))
         }
 
-        CallGuardCard(settings, onOpenCallGuard)
+        Box(Modifier.enterUp(5)) { CallGuardCard(settings, onOpenCallGuard) }
 
-        CaregiverCard(settings, onCallCaregiver, onOpenSettings)
+        Box(Modifier.enterUp(6)) { CaregiverCard(settings, onCallCaregiver, onOpenSettings) }
 
-        HotlineCard(onCallHotline)
+        Box(Modifier.enterUp(7)) { HotlineCard(onCallHotline) }
 
         Card(
+            modifier = Modifier.enterUp(8),
             shape = RoundedCornerShape(28.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
         ) {
@@ -168,7 +172,7 @@ private fun HeroCard(onSpeak: () -> Unit, onType: () -> Unit) {
     ) {
         Column(Modifier.padding(22.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                ShieldOrb(size = 92.dp)
+                ShieldOrb(size = 92.dp, pulse = com.scamsense.app.ui.components.breathing())
                 Spacer(Modifier.width(12.dp))
                 Column(Modifier.weight(1f)) {
                     Text("ตรวจก่อนเชื่อ", style = MaterialTheme.typography.headlineMedium, color = Color.White)
