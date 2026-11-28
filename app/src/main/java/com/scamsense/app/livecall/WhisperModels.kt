@@ -12,14 +12,14 @@ import kotlin.coroutines.coroutineContext
 
 /** Speech models downloaded once (Wi-Fi recommended) into app-private storage. */
 enum class WhisperModel(val id: String, val label: String, val fileName: String, val minBytes: Long, val approxMb: Int) {
-    SMALL("small", "แม่นยำกว่า (~180 MB)", "ggml-small-q5_1.bin", 150_000_000, 181),
-    BASE("base", "เร็วกว่า สำหรับเครื่องรุ่นเก่า (~57 MB)", "ggml-base-q5_1.bin", 40_000_000, 57),
+    SMALL("small", "แม่นยำกว่า แต่ต้องใช้เครื่องแรง RAM 6 GB ขึ้นไป (~180 MB)", "ggml-small-q5_1.bin", 150_000_000, 181),
+    BASE("base", "เร็ว เหมาะกับเครื่องราคาประหยัด (~57 MB) แนะนำ", "ggml-base-q5_1.bin", 40_000_000, 57),
     ;
 
     val url: String get() = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/$fileName"
 
     companion object {
-        fun byId(id: String) = entries.firstOrNull { it.id == id } ?: SMALL
+        fun byId(id: String) = entries.firstOrNull { it.id == id } ?: BASE
     }
 }
 

@@ -51,6 +51,13 @@ Java_com_scamsense_app_livecall_WhisperNative_nativeTranscribe(
     p.suppress_blank = true;
     p.suppress_nst = true;      // drop non-speech tokens ([music], etc.)
     p.temperature = 0.0f;
+    p.temperature_inc = 0.0f;   // no fallback re-decodes: a retry can cost 5x the time on slow phones
+    p.max_tokens = 96;          // an utterance is at most ~7 s of speech
+    // The encoder normally always processes a 30 s window. Utterances are only a few
+    // seconds, so shrink the window to the audio length (50 frames/s + margin): several
+    // times faster on low-end phones, which is what makes warnings arrive during the call.
+    const int ctx_frames = static_cast<int>((static_cast<long long>(n) * 50) / 16000) + 64;
+    if (ctx_frames < 1500) p.audio_ctx = ctx_frames;
     p.print_progress = false;
     p.print_realtime = false;
     p.print_special = false;

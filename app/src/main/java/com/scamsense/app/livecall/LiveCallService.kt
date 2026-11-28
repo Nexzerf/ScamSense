@@ -80,6 +80,9 @@ class LiveCallService : Service() {
         Thread(r, "ScamSense-STT").apply { priority = Thread.NORM_PRIORITY - 1 }
     }.asCoroutineDispatcher()
     private var callbackRegistration: Any? = null
+    /** Loudest sample seen so far: tells "the phone gives us silence" apart from "nobody spoke". */
+    @Volatile private var peak = 0
+    private var silenceJob: Job? = null
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -156,6 +159,15 @@ class LiveCallService : Service() {
         }
         readPipe = pipe[0]
         notifyStatus("กำลังฟังและตรวจสายนี้…", RiskLevel.SAFE, false)
+        // Some phones hand the shell an all-zero stream for call audio. Say so instead of
+        // staying silent, so the user knows this phone cannot be protected this way.
+        silenceJob = scope.launch {
+            delay(SILENCE_CHECK_MS)
+            if (peak < SILENCE_PEAK) notifyStatus(
+                "ยังไม่ได้ยินเสียงปลายสาย เครื่องนี้อาจปิดกั้นเสียงในสาย (ลองเปิดลำโพงแล้วพูดใหม่ หรือแจ้งผู้พัฒนา)",
+                RiskLevel.SUSPICIOUS, false,
+            )
+        }
 
         // Keep at most two utterances queued: if transcription falls behind, prefer fresh speech.
         val utterances = Channel<FloatArray>(2, BufferOverflow.DROP_OLDEST)
@@ -174,6 +186,7 @@ class LiveCallService : Service() {
                         if (carry >= 0 && n > 0) { shorts[count++] = ((bytes[0].toInt() shl 8) or carry).toShort(); i = 1; carry = -1 }
                         while (i + 1 < n) { shorts[count++] = ((bytes[i + 1].toInt() shl 8) or (bytes[i].toInt() and 0xff)).toShort(); i += 2 }
                         if (i < n) carry = bytes[i].toInt() and 0xff
+                        if (peak < SILENCE_PEAK) for (k in 0 until count) { val a = kotlin.math.abs(shorts[k].toInt()); if (a > peak) peak = a }
                         chunker.feed(shorts, count).forEach { utterances.trySend(it) }
                     }
                 }
@@ -192,7 +205,14 @@ class LiveCallService : Service() {
             whisper.use { w ->
                 for (pcm in utterances) {
                     val text = w.transcribe(pcm, "th")
-                    if (text.isNotBlank()) onUpdate(monitor.onTranscript(text))
+                    if (text.isNotBlank()) {
+                        val u = monitor.onTranscript(text)
+                        // Show what was heard while nothing is wrong: proof that listening works.
+                        if (u.action == LiveCallMonitor.Action.NONE && monitor.latest?.level != RiskLevel.DANGEROUS &&
+                            hangUpJob == null
+                        ) notifyStatus("ได้ยินล่าสุด: \u201c${TextNormalizer.preview(text, 80)}\u201d", RiskLevel.SAFE, false)
+                        onUpdate(u)
+                    }
                 }
             }
         }
@@ -235,6 +255,7 @@ class LiveCallService : Service() {
         if (finished) return
         finished = true
         scope.launch {
+            silenceJob?.cancel()
             runCatching { audio?.stopStream() }
             runCatching { readPipe?.close() }
             // Let the last utterances finish transcribing so the verdict is complete.
@@ -383,6 +404,9 @@ class LiveCallService : Service() {
         private const val RING_TIMEOUT_MS = 90_000L
         private const val HANG_UP_DELAY_MS = 4_000L
         private const val FINAL_STT_TIMEOUT_MS = 15_000L
+        private const val SILENCE_CHECK_MS = 12_000L
+        /** 16-bit peak below this for the whole window = effectively silent capture. */
+        private const val SILENCE_PEAK = 200
 
         fun ensureChannel(context: Context) {
             val nm = context.getSystemService(NotificationManager::class.java) ?: return

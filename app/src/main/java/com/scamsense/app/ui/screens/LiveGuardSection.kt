@@ -41,6 +41,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -53,7 +55,9 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.scamsense.app.data.AppSettings
+import com.scamsense.app.livecall.LiveSelfTest
 import com.scamsense.app.livecall.ShizukuGate
+import kotlinx.coroutines.launch
 import com.scamsense.app.livecall.WhisperModel
 import com.scamsense.app.livecall.WhisperModels
 import com.scamsense.app.livecall.WhisperNative
@@ -192,6 +196,10 @@ fun LiveGuardSection(
                     BigOutlinedButton("ดาวน์โหลดโมเดล (${model.approxMb} MB, แนะนำ Wi-Fi)", icon = Icons.Rounded.Download, onClick = { onDownloadModel(model) })
                 }
             }
+            if (state.shizuku == ShizukuGate.Status.READY && state.modelInstalled && state.nativeAvailable) {
+                Spacer(Modifier.height(12.dp))
+                SelfTest(model, onUseFast = { onUpdate { it.copy(liveModel = WhisperModel.BASE.id) } })
+            }
             Spacer(Modifier.height(14.dp))
 
             // ---- switches
@@ -292,5 +300,50 @@ private fun Toggle(title: String, subtitle: String, checked: Boolean, enabled: B
         }
         Spacer(Modifier.width(10.dp))
         Switch(checked = checked, onCheckedChange = null, enabled = enabled)
+    }
+}
+
+/**
+ * Lets the family check the whole chain without making a call: speak into the phone,
+ * see the words it understood, how long that took, and the scam score.
+ */
+@Composable
+private fun SelfTest(model: WhisperModel, onUseFast: () -> Unit) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var running by remember { mutableStateOf(false) }
+    var outcome by remember(model) { mutableStateOf<LiveSelfTest.Outcome?>(null) }
+    BigOutlinedButton(
+        if (running) "กำลังฟัง… พูดเลย แล้วรอผลสักครู่" else "ทดสอบการฟัง: กดแล้วพูดใส่มือถือ 6 วินาที",
+        icon = Icons.Rounded.Hearing,
+        onClick = {
+            if (running || Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return@BigOutlinedButton
+            running = true
+            outcome = null
+            scope.launch {
+                outcome = runCatching { LiveSelfTest.run(context.applicationContext, model) }
+                    .getOrElse { LiveSelfTest.Outcome.Failed("ทดสอบไม่สำเร็จ: ${it.javaClass.simpleName}") }
+                running = false
+            }
+        },
+    )
+    Text("ลองพูด เช่น \"ขอรหัส OTP ด่วน แล้วโอนเงินเข้าบัญชีปลอดภัย\"",
+        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    when (val o = outcome) {
+        null -> Unit
+        is LiveSelfTest.Outcome.Failed -> Text(o.reason, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
+        is LiveSelfTest.Outcome.Heard -> {
+            val slow = o.seconds > o.audioSeconds * 1.5f
+            Spacer(Modifier.height(6.dp))
+            Text("ได้ยินว่า: \u201c${o.text.ifBlank { "(ไม่เป็นคำพูด)" }}\u201d", style = MaterialTheme.typography.bodyMedium)
+            Text("แปลงเสียงใช้เวลา ${"%.1f".format(o.seconds)} วินาที" + if (slow) " — ช้าเกินไปสำหรับระหว่างคุย" else " — เร็วพอ",
+                style = MaterialTheme.typography.bodySmall,
+                color = if (slow) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant)
+            o.result?.let { r ->
+                Text("ผลตรวจ: ${r.score}/100 ${when (r.level) { RiskLevel.DANGEROUS -> "อันตราย"; RiskLevel.SUSPICIOUS -> "น่าสงสัย"; else -> "ปลอดภัย" }}",
+                    style = MaterialTheme.typography.titleSmall)
+            }
+            if (slow && model == WhisperModel.SMALL) Action("เปลี่ยนเป็นโมเดล \"เร็ว\"", onUseFast)
+        }
     }
 }
