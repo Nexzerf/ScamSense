@@ -28,11 +28,12 @@ ScamSense ฟัง**เสียงปลายสาย**ระหว่าง
 ระหว่างสายจริง การแจ้งเตือน "ScamSense ฟังสายนี้อยู่" จะแสดง **"ได้ยินล่าสุด: …"** ทุกครั้งที่แปลงเสียงได้ ถ้า 12 วินาทีแรกไม่ได้ยินเสียงปลายสายเลย จะแจ้งว่าเครื่องอาจปิดกั้นเสียงในสาย
 
 ## โมเดลภาษาไทย (Thonburian Whisper)
-โมเดลที่ฝึกด้วยภาษาไทยของ BiodatLab ม.มหิดล ไม่มีไฟล์ขนาดเหมาะกับมือถือให้ดาวน์โหลด จึงต้องแปลงบนคอมก่อน
-1. บนคอม: `pip install torch transformers huggingface_hub numpy` แล้ว `python tools/convert_thonburian.py` (ค่าเริ่มต้น `biodatlab/distill-whisper-th-small`)
-2. คัดลอกไฟล์ `ggml-thonburian-f16.bin` เข้ามือถือ เช่น `adb push ggml-thonburian-f16.bin /sdcard/Download/`
-3. ในแอป: ป้องกันสายโทร → ข้อ 3 → เลือกโมเดล **"ภาษาไทย"** → **นำเข้าไฟล์โมเดล** แอปจะย่อเป็น q5_1 ในเครื่อง (ใช้ตัว quantize ของ whisper.cpp)
-4. กด "ทดสอบการฟัง" เพื่อดูความแม่นและความเร็วบนเครื่องจริง
+โมเดลที่ฝึกด้วยภาษาไทยของ BiodatLab ม.มหิดล (`biodatlab/distill-whisper-th-small`) ไม่มีไฟล์รูปแบบ whisper.cpp ให้ดาวน์โหลด แอปจึงทำให้เองในเครื่อง:
+1. ดาวน์โหลด config.json, vocab.json และ safetensors จาก Hugging Face (ครั้งเดียว ~0.5–1 GB ใช้ Wi-Fi)
+2. แปลงเป็น whisper.cpp ด้วย `HfWhisperToGgml` (Kotlin, ทดสอบแล้วว่าได้ไฟล์ตรงกับ convert-h5-to-ggml.py ของ whisper.cpp ทุกไบต์)
+3. ย่อเป็น q5_1 ด้วยตัว quantize ของ whisper.cpp แล้วลบไฟล์ชั่วคราว
+
+ทางเลือก: แปลงบนคอมด้วย `tools/convert_thonburian.py` แล้ว "นำเข้าไฟล์โมเดล" ในแอป
 
 ## ข้อจำกัดที่ต้องรู้
 - **หลังรีสตาร์ทมือถือ ต้องเปิด Shizuku ใหม่ทุกครั้ง** (ข้อจำกัดของ Android แบบไม่รูท) ระหว่างนั้นการฟังระหว่างคุยจะไม่ทำงาน แต่การกรองสายยังทำงานปกติ

@@ -190,16 +190,27 @@ fun LiveGuardSection(
                 }
             }
             Text(model.label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            if (model.importOnly && state.nativeAvailable) {
-                Spacer(Modifier.height(8.dp))
+            if (model.hfRepo != null && state.nativeAvailable && downloadProgress == null) {
+                Spacer(Modifier.height(6.dp))
                 ImportModel(installed = state.modelInstalled, onDone = onRefresh)
-            } else if (!state.modelInstalled && state.nativeAvailable) {
+            }
+            if (!state.modelInstalled && state.nativeAvailable) {
                 Spacer(Modifier.height(8.dp))
                 if (downloadProgress != null) {
                     LinearProgressIndicator(progress = { downloadProgress }, modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(8.dp)))
-                    Text("กำลังดาวน์โหลด ${(downloadProgress * 100).toInt()}%", style = MaterialTheme.typography.bodySmall)
+                    Text(
+                        when {
+                            model.hfRepo == null || downloadProgress < 0.75f -> "กำลังดาวน์โหลด ${(downloadProgress * 100).toInt()}%"
+                            downloadProgress < 0.94f -> "กำลังแปลงโมเดล ${(downloadProgress * 100).toInt()}%"
+                            else -> "กำลังย่อโมเดลให้เร็วขึ้น อาจใช้เวลาหลายนาที อย่าปิดแอป…"
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                    )
                 } else {
-                    BigOutlinedButton("ดาวน์โหลดโมเดล (${model.approxMb} MB, แนะนำ Wi-Fi)", icon = Icons.Rounded.Download, onClick = { onDownloadModel(model) })
+                    BigOutlinedButton(
+                        if (model.hfRepo != null) "ดาวน์โหลดและแปลงโมเดลภาษาไทย (ใช้ Wi-Fi)" else "ดาวน์โหลดโมเดล (${model.approxMb} MB, แนะนำ Wi-Fi)",
+                        icon = Icons.Rounded.Download, onClick = { onDownloadModel(model) },
+                    )
                 }
             }
             if (state.shizuku == ShizukuGate.Status.READY && state.modelInstalled && state.nativeAvailable) {
