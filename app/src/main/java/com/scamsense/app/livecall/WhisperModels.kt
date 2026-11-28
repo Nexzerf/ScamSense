@@ -11,9 +11,14 @@ import javax.net.ssl.HttpsURLConnection
 import kotlin.coroutines.coroutineContext
 
 /** Speech models downloaded once (Wi-Fi recommended) into app-private storage. */
-enum class WhisperModel(val id: String, val label: String, val fileName: String, val minBytes: Long, val approxMb: Int) {
+enum class WhisperModel(
+    val id: String, val label: String, val fileName: String, val minBytes: Long, val approxMb: Int,
+    /** Imported by the user from a file instead of downloaded (no public ggml build exists). */
+    val importOnly: Boolean = false,
+) {
     SMALL("small", "แม่นยำกว่า แต่ต้องใช้เครื่องแรง RAM 6 GB ขึ้นไป (~180 MB)", "ggml-small-q5_1.bin", 150_000_000, 181),
     BASE("base", "เร็ว เหมาะกับเครื่องราคาประหยัด (~57 MB) แนะนำ", "ggml-base-q5_1.bin", 40_000_000, 57),
+    THAI("thai", "ฝึกด้วยภาษาไทย (Thonburian Whisper) นำเข้าจากไฟล์ที่แปลงบนคอม", "ggml-thai-q5_1.bin", 20_000_000, 0, importOnly = true),
     ;
 
     val url: String get() = "https://huggingface.co/ggerganov/whisper.cpp/resolve/main/$fileName"
@@ -78,6 +83,58 @@ object WhisperModels {
                 target
             }.onFailure { part.delete() }
         }
+
+    /**
+     * Imports a whisper.cpp model chosen by the user (e.g. Thonburian Whisper converted on a
+     * PC with tools/convert_thonburian.py). f16/f32 files are shrunk to q5_1 on the phone.
+     */
+    suspend fun importModel(context: Context, uri: android.net.Uri, onPhase: (String) -> Unit): Result<File> =
+        withContext(Dispatchers.IO) {
+            val model = WhisperModel.THAI
+            val target = file(context, model)
+            val raw = File(dir(context), "import.part")
+            val quant = File(dir(context), "import-q.part")
+            runCatching {
+                onPhase("กำลังคัดลอกไฟล์…")
+                val stream = context.contentResolver.openInputStream(uri) ?: throw IOException("cannot open file")
+                stream.use { input ->
+                    raw.outputStream().use { out ->
+                        val buf = ByteArray(256 * 1024)
+                        var total = 0L
+                        while (true) {
+                            coroutineContext.ensureActive()
+                            val n = input.read(buf)
+                            if (n < 0) break
+                            total += n
+                            if (total > MAX_IMPORT_BYTES) throw IOException("file too large")
+                            out.write(buf, 0, n)
+                        }
+                    }
+                }
+                if (raw.length() < model.minBytes || !hasGgmlMagic(raw)) throw IOException("not a whisper.cpp model")
+                val ftype = headerFtype(raw)
+                if (ftype == 0 || ftype == 1) {
+                    onPhase("กำลังย่อโมเดลให้เร็วขึ้น อาจใช้เวลาหลายนาที…")
+                    if (!WhisperNative.quantize(raw.path, quant.path) || !hasGgmlMagic(quant)) throw IOException("quantize failed")
+                    raw.delete()
+                    if (!quant.renameTo(target)) throw IOException("could not save model")
+                } else {
+                    if (!raw.renameTo(target)) throw IOException("could not save model")
+                }
+                target
+            }.also { raw.delete(); quant.delete() }
+        }
+
+    /** The 11th header int: 0 = f32, 1 = f16, otherwise already quantized. */
+    private fun headerFtype(f: File): Int = runCatching {
+        f.inputStream().use { s ->
+            val b = ByteArray(48)
+            if (s.read(b) != 48) return -1
+            java.nio.ByteBuffer.wrap(b).order(java.nio.ByteOrder.LITTLE_ENDIAN).getInt(44)
+        }
+    }.getOrDefault(-1)
+
+    private const val MAX_IMPORT_BYTES = 2_000_000_000L
 
     /** whisper.cpp model files start with the uint32 magic 0x67676d6c ("lmgg" on disk). */
     private fun hasGgmlMagic(f: File): Boolean = runCatching {

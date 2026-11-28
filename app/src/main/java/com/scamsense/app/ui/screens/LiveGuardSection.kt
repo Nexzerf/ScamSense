@@ -172,7 +172,7 @@ fun LiveGuardSection(
             val model = WhisperModel.byId(settings.liveModel)
             Check(Icons.Rounded.Hearing, "โมเดลแปลงเสียงภาษาไทย", state.modelInstalled && state.nativeAvailable, when {
                 !state.nativeAvailable -> "เครื่องนี้ไม่รองรับ"
-                state.modelInstalled -> "ติดตั้งแล้ว (${model.approxMb} MB)"
+                state.modelInstalled -> "ติดตั้งแล้ว (${WhisperModels.file(context, model).length() / 1_000_000} MB)"
                 else -> "ยังไม่ได้ดาวน์โหลด"
             })
             Spacer(Modifier.height(8.dp))
@@ -183,11 +183,17 @@ fun LiveGuardSection(
                         onClick = { onUpdate { it.copy(liveModel = m.id) } },
                         shape = SegmentedButtonDefaults.itemShape(i, WhisperModel.entries.size),
                         modifier = Modifier.heightIn(min = 48.dp),
-                    ) { Text(if (m == WhisperModel.SMALL) "แม่นยำ" else "เร็ว", style = MaterialTheme.typography.labelLarge) }
+                    ) {
+                        Text(when (m) { WhisperModel.SMALL -> "แม่นยำ"; WhisperModel.BASE -> "เร็ว"; WhisperModel.THAI -> "ภาษาไทย" },
+                            style = MaterialTheme.typography.labelLarge)
+                    }
                 }
             }
             Text(model.label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            if (!state.modelInstalled && state.nativeAvailable) {
+            if (model.importOnly && state.nativeAvailable) {
+                Spacer(Modifier.height(8.dp))
+                ImportModel(installed = state.modelInstalled, onDone = onRefresh)
+            } else if (!state.modelInstalled && state.nativeAvailable) {
                 Spacer(Modifier.height(8.dp))
                 if (downloadProgress != null) {
                     LinearProgressIndicator(progress = { downloadProgress }, modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(8.dp)))
@@ -348,4 +354,44 @@ private fun SelfTest(model: WhisperModel, onUseFast: () -> Unit) {
             if (slow && model == WhisperModel.SMALL) Action("เปลี่ยนเป็นโมเดล \"เร็ว\"", onUseFast)
         }
     }
+}
+
+/**
+ * Thonburian Whisper (Thai-trained) has no public whisper.cpp build in a phone-sized
+ * variant, so the family converts it on a PC (tools/convert_thonburian.py) and imports the
+ * .bin here; the app shrinks it to q5_1 on the phone.
+ */
+@Composable
+private fun ImportModel(installed: Boolean, onDone: () -> Unit) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var phase by remember { mutableStateOf<String?>(null) }
+    var error by remember { mutableStateOf<String?>(null) }
+    val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        error = null
+        phase = "กำลังเตรียม…"
+        scope.launch {
+            val r = WhisperModels.importModel(context.applicationContext, uri) { p -> scope.launch { phase = p } }
+            phase = null
+            r.onFailure { error = "นำเข้าไม่สำเร็จ: ไฟล์ต้องเป็นโมเดล whisper.cpp (.bin) ที่แปลงด้วยสคริปต์ของ ScamSense" }
+            onDone()
+        }
+    }
+    if (phase != null) {
+        LinearProgressIndicator(modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(8.dp)))
+        Text(phase.orEmpty(), style = MaterialTheme.typography.bodySmall)
+        return
+    }
+    BigOutlinedButton(
+        if (installed) "นำเข้าไฟล์โมเดลใหม่แทนของเดิม" else "นำเข้าไฟล์โมเดล Thonburian (.bin)",
+        icon = Icons.Rounded.Download,
+        onClick = { picker.launch(arrayOf("application/octet-stream", "*/*")) },
+    )
+    Text(
+        "แปลงโมเดลบนคอมด้วยสคริปต์ tools/convert_thonburian.py แล้วคัดลอกไฟล์ .bin มาไว้ในมือถือ " +
+            "(เช่น adb push ไฟล์ /sdcard/Download/) แอปจะย่อขนาดให้อัตโนมัติ",
+        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
 }

@@ -20,6 +20,11 @@ add_link_options($<$<NOT:$<CONFIG:Debug>>:-Wl,--strip-all>)
 
 add_subdirectory(${WHISPER_ROOT} ${CMAKE_CURRENT_BINARY_DIR}/whisper.cpp)
 
-add_library(scamsense_whisper SHARED scamsense_whisper.cpp)
+add_library(scamsense_whisper SHARED
+    scamsense_whisper.cpp
+    ss_quantize.cpp
+    ${WHISPER_ROOT}/examples/common.cpp
+    ${WHISPER_ROOT}/examples/common-ggml.cpp)
+target_include_directories(scamsense_whisper PRIVATE ${WHISPER_ROOT}/examples)
 find_library(log-lib log)
-target_link_libraries(scamsense_whisper whisper ${log-lib})
+target_link_libraries(scamsense_whisper whisper ggml ${log-lib})

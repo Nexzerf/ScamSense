@@ -33,7 +33,11 @@ class WhisperNative private constructor(private var ctx: Long) : Closeable {
         /** Leave a couple of cores for the phone call itself and the UI. */
         fun defaultThreads(): Int = (Runtime.getRuntime().availableProcessors() - 2).coerceIn(2, 4)
 
+        /** Converts an f16/f32 whisper.cpp model to q5_1 (blocking, can take minutes). */
+        fun quantize(input: String, output: String): Boolean = isAvailable && nativeQuantize(input, output)
+
         /** Static JNI symbol: Java_com_scamsense_app_livecall_WhisperNative_nativeInit */
         @JvmStatic external fun nativeInit(path: String): Long
+        @JvmStatic external fun nativeQuantize(input: String, output: String): Boolean
     }
 }
