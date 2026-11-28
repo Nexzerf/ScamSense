@@ -39,6 +39,10 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.rounded.Link
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -79,8 +83,13 @@ data class LiveGuardState(
     val nativeAvailable: Boolean,
     /** Exempt from battery optimisation: Android 12+ then lets the listener start by itself. */
     val backgroundAllowed: Boolean = true,
+    /** Built-in mode: ScamSense paired with Wireless debugging itself (no Shizuku app). */
+    val builtInPaired: Boolean = false,
+    /** Built-in mode can switch Wireless debugging back on by itself (after reboots). */
+    val autoEnable: Boolean = false,
 ) {
-    val ready get() = supported && shizuku == ShizukuGate.Status.READY && phonePermission && modelInstalled && nativeAvailable
+    val shellReady get() = builtInPaired || shizuku == ShizukuGate.Status.READY
+    val ready get() = supported && shellReady && phonePermission && modelInstalled && nativeAvailable
 }
 
 @Composable
@@ -97,6 +106,8 @@ fun rememberLiveGuardState(settings: AppSettings, refreshKey: Any?): LiveGuardSt
             nativeAvailable = WhisperNative.isAvailable,
             backgroundAllowed = Build.VERSION.SDK_INT < Build.VERSION_CODES.R ||
                 com.scamsense.app.livecall.LiveCallService.isBackgroundStartAllowed(context),
+            builtInPaired = com.scamsense.app.livecall.adb.BuiltInShell.isPaired(context),
+            autoEnable = com.scamsense.app.livecall.adb.BuiltInShell.canToggleWirelessDebugging(context),
         )
     }
 }
@@ -114,7 +125,7 @@ fun LiveGuardSection(
     val context = LocalContext.current
     val phoneLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { onRefresh() }
 
-    com.scamsense.app.ui.components.StepHeader(3, "ฟังระหว่างคุย (ทดลอง)", done = settings.liveGuardEnabled && state.ready,
+    com.scamsense.app.ui.components.StepHeader(if (com.scamsense.app.Features.AI_CALL_ASSISTANT) 3 else 2, "ฟังระหว่างคุย (ทดลอง)", done = settings.liveGuardEnabled && state.ready,
         modifier = Modifier.enterUp(5))
     Card(
         modifier = Modifier.enterUp(5),
@@ -135,21 +146,30 @@ fun LiveGuardSection(
             }
             Spacer(Modifier.height(14.dp))
 
-            // ---- Shizuku
-            val shizukuOk = state.shizuku == ShizukuGate.Status.READY
-            Check(Icons.Rounded.Terminal, "Shizuku", shizukuOk, when (state.shizuku) {
-                ShizukuGate.Status.READY -> "พร้อมใช้งาน"
-                ShizukuGate.Status.NOT_INSTALLED -> "ยังไม่ได้ติดตั้ง (ให้ลูกหลานช่วยติดตั้งและเปิดครั้งแรก)"
-                ShizukuGate.Status.NOT_RUNNING -> "ยังไม่ได้เปิด — ต้องเปิดใหม่ทุกครั้งที่รีสตาร์ทเครื่อง"
-                ShizukuGate.Status.NO_PERMISSION -> "ยังไม่ได้อนุญาตให้ ScamSense ใช้"
-            })
-            when (state.shizuku) {
-                ShizukuGate.Status.NOT_INSTALLED -> Action("ติดตั้ง Shizuku จาก Play Store (ฟรี)") { ShizukuGate.openInstallPage(context) }
-                ShizukuGate.Status.NOT_RUNNING -> Action("เปิดแอป Shizuku") { ShizukuGate.launchShizukuApp(context) }
-                ShizukuGate.Status.NO_PERMISSION -> Action("อนุญาตให้ใช้ Shizuku") { ShizukuGate.requestPermission { onRefresh() } }
-                ShizukuGate.Status.READY -> Unit
+            // ---- connection to the shell (built-in pairing first, Shizuku as an alternative)
+            BuiltInPairing(state, onRefresh)
+            if (!state.builtInPaired) {
+                var showShizuku by remember { mutableStateOf(state.shizuku == ShizukuGate.Status.READY) }
+                TextButton(onClick = { showShizuku = !showShizuku }, modifier = Modifier.heightIn(min = 48.dp)) {
+                    Text(if (showShizuku) "ซ่อนวิธีใช้แอป Shizuku" else "หรือใช้แอป Shizuku แทน (ทางเลือก)", style = MaterialTheme.typography.labelLarge)
+                }
+                if (showShizuku) {
+                    val shizukuOk = state.shizuku == ShizukuGate.Status.READY
+                    Check(Icons.Rounded.Terminal, "Shizuku", shizukuOk, when (state.shizuku) {
+                        ShizukuGate.Status.READY -> "พร้อมใช้งาน"
+                        ShizukuGate.Status.NOT_INSTALLED -> "ยังไม่ได้ติดตั้ง"
+                        ShizukuGate.Status.NOT_RUNNING -> "ยังไม่ได้เปิด — ต้องเปิดใหม่ทุกครั้งที่รีสตาร์ทเครื่อง"
+                        ShizukuGate.Status.NO_PERMISSION -> "ยังไม่ได้อนุญาตให้ ScamSense ใช้"
+                    })
+                    when (state.shizuku) {
+                        ShizukuGate.Status.NOT_INSTALLED -> Action("ติดตั้ง Shizuku จาก Play Store (ฟรี)") { ShizukuGate.openInstallPage(context) }
+                        ShizukuGate.Status.NOT_RUNNING -> Action("เปิดแอป Shizuku") { ShizukuGate.launchShizukuApp(context) }
+                        ShizukuGate.Status.NO_PERMISSION -> Action("อนุญาตให้ใช้ Shizuku") { ShizukuGate.requestPermission { onRefresh() } }
+                        ShizukuGate.Status.READY -> Unit
+                    }
+                    if (state.shizuku != ShizukuGate.Status.READY) ShizukuGuide(onOpenDevOptions = { ShizukuGate.openDeveloperOptions(context) })
+                }
             }
-            if (state.shizuku != ShizukuGate.Status.READY) ShizukuGuide(onOpenDevOptions = { ShizukuGate.openDeveloperOptions(context) })
             Spacer(Modifier.height(12.dp))
 
             // ---- phone state permission
@@ -218,7 +238,7 @@ fun LiveGuardSection(
             if (model.hfRepo != null && state.nativeAvailable && downloadProgress == null) {
                 ImportModel(installed = state.modelInstalled, onDone = onRefresh)
             }
-            if (state.shizuku == ShizukuGate.Status.READY && state.modelInstalled && state.nativeAvailable) {
+            if (state.shellReady && state.modelInstalled && state.nativeAvailable) {
                 Spacer(Modifier.height(12.dp))
                 SelfTest(model, onUseFast = { onUpdate { it.copy(liveModel = WhisperModel.BASE.id) } })
             }
@@ -409,4 +429,101 @@ private fun ImportModel(installed: Boolean, onDone: () -> Unit) {
         )
     }
     error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
+}
+
+private val PAIR_STEPS = listOf(
+    "เปิดโหมดนักพัฒนา: ตั้งค่า → เกี่ยวกับโทรศัพท์ → แตะ \"หมายเลขบิลด์\" 7 ครั้ง",
+    "ต่อ Wi‑Fi (ไม่ต้องมีอินเทอร์เน็ตก็ได้)",
+    "กดปุ่ม \"เริ่มจับคู่\" ด้านล่าง ScamSense จะเปิดหน้าตัวเลือกสำหรับนักพัฒนาให้",
+    "เปิด \"การแก้ไขข้อบกพร่องแบบไร้สาย\" แล้วแตะเข้าไป → \"จับคู่อุปกรณ์ด้วยรหัสจับคู่\"",
+    "ลากแถบแจ้งเตือนลงมา พิมพ์รหัส 6 หลักลงในการแจ้งเตือนของ ScamSense แล้วกดส่ง",
+)
+
+/**
+ * Built-in pairing: ScamSense connects to the phone's own Wireless debugging, so no Shizuku
+ * app is needed. Pairing happens once; afterwards ScamSense reconnects (and switches Wireless
+ * debugging on) by itself.
+ */
+@Composable
+private fun BuiltInPairing(state: LiveGuardState, onRefresh: () -> Unit) {
+    val context = LocalContext.current
+    val pairing by com.scamsense.app.livecall.adb.PairingService.state.collectAsStateWithLifecycle()
+    var showLog by remember { mutableStateOf(false) }
+    val notifLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
+        com.scamsense.app.livecall.adb.PairingService.requestCode(context)
+        ShizukuGate.openDeveloperOptions(context)
+    }
+    LaunchedEffect(pairing) { if (pairing is com.scamsense.app.livecall.adb.PairingService.State.Done) onRefresh() }
+
+    if (state.builtInPaired) {
+        Check(Icons.Rounded.Link, "จับคู่ในแอปแล้ว", true,
+            if (state.autoEnable) "ไม่ต้องใช้แอป Shizuku • เปิดการเชื่อมต่อให้เองเมื่อมีสาย แม้รีสตาร์ทเครื่อง"
+            else "ไม่ต้องใช้แอป Shizuku • ต้องเปิด \"การแก้ไขข้อบกพร่องแบบไร้สาย\" ค้างไว้")
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            TextButton(onClick = { showLog = true }, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text("ดูบันทึกการเชื่อมต่อ", style = MaterialTheme.typography.labelLarge)
+            }
+            TextButton(onClick = { com.scamsense.app.livecall.adb.BuiltInShell.forget(context); onRefresh() }, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text("ยกเลิกการจับคู่", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.error)
+            }
+        }
+    } else {
+        Check(Icons.Rounded.Link, "จับคู่ในแอป (แนะนำ)", false, "ไม่ต้องลงแอปอื่น ทำครั้งเดียว ให้ลูกหลานช่วยได้")
+        Spacer(Modifier.height(8.dp))
+        PAIR_STEPS.forEachIndexed { i, step ->
+            Row(Modifier.padding(vertical = 4.dp), verticalAlignment = Alignment.Top) {
+                Text("${i + 1}.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary, modifier = Modifier.width(24.dp))
+                Text(step, style = MaterialTheme.typography.bodyMedium)
+            }
+        }
+        Spacer(Modifier.height(8.dp))
+        when (val p = pairing) {
+            is com.scamsense.app.livecall.adb.PairingService.State.Working -> {
+                LinearProgressIndicator(Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(8.dp)))
+                Text("กำลังจับคู่… อย่าเพิ่งปิดหน้าตั้งค่า", style = MaterialTheme.typography.bodySmall)
+            }
+            is com.scamsense.app.livecall.adb.PairingService.State.Failed ->
+                Text(p.message, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
+            is com.scamsense.app.livecall.adb.PairingService.State.Waiting ->
+                Text("รอรหัสจับคู่ในการแจ้งเตือนของ ScamSense…", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
+            else -> Unit
+        }
+        Action("เริ่มจับคู่") {
+            if (Build.VERSION.SDK_INT >= 33 &&
+                ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+            ) {
+                notifLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            } else {
+                com.scamsense.app.livecall.adb.PairingService.requestCode(context)
+                ShizukuGate.openDeveloperOptions(context)
+            }
+        }
+        if (pairing is com.scamsense.app.livecall.adb.PairingService.State.Failed) {
+            TextButton(onClick = { showLog = true }, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text("ดูบันทึกการเชื่อมต่อ (ส่งให้ผู้พัฒนา)", style = MaterialTheme.typography.labelLarge)
+            }
+        }
+    }
+
+    if (showLog) {
+        val log = remember { com.scamsense.app.livecall.adb.AdbLog.text().ifBlank { "(ยังไม่มีบันทึก)" } }
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showLog = false },
+            title = { Text("บันทึกการเชื่อมต่อ") },
+            text = {
+                androidx.compose.foundation.layout.Box(Modifier.heightIn(max = 360.dp)) {
+                    Text(log, style = MaterialTheme.typography.labelSmall,
+                        modifier = Modifier.verticalScroll(androidx.compose.foundation.rememberScrollState()))
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    val send = android.content.Intent(android.content.Intent.ACTION_SEND).setType("text/plain")
+                        .putExtra(android.content.Intent.EXTRA_TEXT, "ScamSense connection log\n$log")
+                    runCatching { context.startActivity(android.content.Intent.createChooser(send, "ส่งบันทึก")) }
+                }) { Text("ส่งต่อ") }
+            },
+            dismissButton = { TextButton(onClick = { showLog = false }) { Text("ปิด") } },
+        )
+    }
 }

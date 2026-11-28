@@ -265,7 +265,7 @@ private fun CallGuardCard(settings: AppSettings, onOpen: () -> Unit) {
                     when {
                         settings.assistantActive -> "เปิดอยู่ • ผู้ช่วย AI รับสายเบอร์แปลกให้ก่อน"
                         screening -> "เปิดอยู่ • บล็อกเบอร์อันตรายให้อัตโนมัติ"
-                        else -> "ยังไม่เปิด • แตะเพื่อเปิดการกรองสายและผู้ช่วย AI"
+                        else -> "ยังไม่เปิด • แตะเพื่อเปิดการกรองสายและการฟังระหว่างคุย"
                     },
                     style = MaterialTheme.typography.bodySmall,
                     color = if (on) c.main else MaterialTheme.colorScheme.onSurfaceVariant,

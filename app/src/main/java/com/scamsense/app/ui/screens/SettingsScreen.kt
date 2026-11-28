@@ -196,7 +196,7 @@ fun SettingsScreen(
             NavRow(
                 icon = Icons.Rounded.PhoneLocked, tint = c.main,
                 title = if (guardOn) "เปิดอยู่" else "ยังไม่เปิด",
-                subtitle = "กรองสายเบอร์อันตราย ฟังระหว่างคุย และผู้ช่วย AI รับสายแทน",
+                subtitle = "กรองสายเบอร์อันตราย และฟังระหว่างคุยเพื่อเตือนหรือวางสายให้",
                 onClick = onOpenCallGuard,
             )
         }
@@ -330,7 +330,7 @@ fun SettingsScreen(
                 Spacer(Modifier.width(10.dp))
                 Text(
                     "ข้อความที่ตรวจไม่ออกจากเครื่อง และข้อมูลที่บันทึกถูกเข้ารหัสด้วยกุญแจใน Android Keystore " +
-                        "อินเทอร์เน็ตใช้เฉพาะตอนดาวน์โหลดโมเดลเสียง และเมื่อเปิดผู้ช่วย AI รับสาย",
+                        "อินเทอร์เน็ตใช้เฉพาะตอนดาวน์โหลดโมเดลเสียงครั้งแรก",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

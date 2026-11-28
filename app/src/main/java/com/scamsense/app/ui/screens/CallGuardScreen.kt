@@ -112,7 +112,7 @@ fun CallGuardScreen(
         topBar = {
             GlowHeader(
                 "ป้องกันสายโทร", onBack,
-                subtitle = "กรองสาย ฟังระหว่างคุย และผู้ช่วย AI",
+                subtitle = "กรองสายเบอร์อันตราย และฟังระหว่างคุย",
                 icon = Icons.Rounded.PhoneLocked,
             )
         },
@@ -126,7 +126,6 @@ fun CallGuardScreen(
             ProgressOverview(
                 listOf(
                     "กรองสาย" to screeningOn,
-                    "ผู้ช่วย AI" to settings.assistantPaired,
                     "ฟังสาย" to settings.liveGuardEnabled,
                 ),
                 Modifier.padding(top = 8.dp).enterUp(0),
@@ -185,11 +184,13 @@ fun CallGuardScreen(
             }
 
             // ---------------------------------------------------------------- step 2: AI assistant
-            com.scamsense.app.ui.components.StepHeader(2, "ผู้ช่วย AI รับสายแทน", done = settings.assistantPaired, modifier = Modifier.enterUp(4))
-            if (!settings.assistantPaired) {
-                PairCard(assistantBusy, onPair)
-            } else {
-                AssistantCard(settings, onUpdate, onDialCode, onOpenCallLog, onUnpair)
+            if (com.scamsense.app.Features.AI_CALL_ASSISTANT) {
+                com.scamsense.app.ui.components.StepHeader(2, "ผู้ช่วย AI รับสายแทน", done = settings.assistantPaired, modifier = Modifier.enterUp(4))
+                if (!settings.assistantPaired) {
+                    PairCard(assistantBusy, onPair)
+                } else {
+                    AssistantCard(settings, onUpdate, onDialCode, onOpenCallLog, onUnpair)
+                }
             }
 
             // ---------------------------------------------------------------- step 3: live listening

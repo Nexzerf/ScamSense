@@ -230,7 +230,7 @@ fun ChoicePill(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     leading: (@Composable () -> Unit)? = null,
-    horizontalPadding: Dp = 18.dp,
+    horizontalPadding: Dp = 14.dp,
 ) {
     val dark = MaterialTheme.colorScheme.background.luminanceCompat() < 0.3f
     val bg = when {
@@ -252,12 +252,12 @@ fun ChoicePill(
         contentColor = fg,
         border = if (selected) null else BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         modifier = modifier
-            .heightIn(min = 52.dp)
+            .heightIn(min = 48.dp)
             .pressScale(interaction, 0.94f)
             .semantics { this.selected = selected },
     ) {
         androidx.compose.foundation.layout.Row(
-            Modifier.padding(horizontal = horizontalPadding, vertical = 10.dp),
+            Modifier.padding(horizontal = horizontalPadding, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = androidx.compose.foundation.layout.Arrangement.Center,
         ) {

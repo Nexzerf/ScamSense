@@ -2,7 +2,6 @@ package com.scamsense.app.ui.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -73,6 +72,7 @@ import com.scamsense.core.engine.RiskLevel
 import com.scamsense.core.engine.RiskResult
 import java.util.Calendar
 
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 fun HistoryScreen(
     items: List<RiskResult>,
@@ -103,9 +103,11 @@ fun HistoryScreen(
     ) {
         item { Box(Modifier.enterUp(0)) { SummaryHero(items) } }
         item {
-            Row(
-                Modifier.horizontalScroll(rememberScrollState()).padding(vertical = 4.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
+            // Wraps instead of scrolling sideways: every filter is visible at once.
+            androidx.compose.foundation.layout.FlowRow(
+                Modifier.padding(vertical = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 ChoicePill("ทั้งหมด ${items.size}", active == null, { filter = null })
                 listOf(RiskLevel.DANGEROUS, RiskLevel.SUSPICIOUS, RiskLevel.SAFE).forEach { level ->

@@ -17,9 +17,9 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 enum class TextScale(val factor: Float, val label: String) {
-    NORMAL(1.0f, "ปกติ"),
-    LARGE(1.15f, "ใหญ่"),
-    EXTRA_LARGE(1.3f, "ใหญ่มาก"),
+    NORMAL(0.9f, "ปกติ"),
+    LARGE(1.0f, "ใหญ่"),
+    EXTRA_LARGE(1.15f, "ใหญ่มาก"),
 }
 
 enum class ThemeMode(val label: String) { SYSTEM("ตามเครื่อง"), LIGHT("สว่าง"), DARK("มืด") }
@@ -49,7 +49,8 @@ data class AppSettings(
     val liveModel: String = "base",
 ) {
     val hasCaregiver: Boolean get() = caregiverPhone.isNotBlank()
-    val assistantPaired: Boolean get() = assistantToken.isNotBlank() && assistantServer.isNotBlank()
+    val assistantPaired: Boolean get() =
+        com.scamsense.app.Features.AI_CALL_ASSISTANT && assistantToken.isNotBlank() && assistantServer.isNotBlank()
     /** Only reject unknown calls when they will really land on the assistant (paired + forwarding set). */
     val assistantActive: Boolean get() = assistantPaired && forwardingConfirmed && sendUnknownToAssistant
 }

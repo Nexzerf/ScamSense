@@ -67,7 +67,7 @@ class ScreenRenderTest {
     private val dangerMsg = "ติดต่อจากสถานีตำรวจ บัญชีของท่านพัวพันคดีฟอกเงิน ต้องโอนเงินไปบัญชีปลอดภัยเพื่อตรวจสอบ ห้ามวางสาย ห้ามบอกใคร"
     private val parcelMsg = "พัสดุของท่านจัดส่งไม่สำเร็จ กรุณาอัปเดตที่อยู่และชำระค่าธรรมเนียม 25 บาท ที่ https://thpost-delivery.top/pay"
 
-    private fun shoot(name: String, dark: Boolean = false, scale: Float = 1.15f, content: @Composable () -> Unit) {
+    private fun shoot(name: String, dark: Boolean = false, scale: Float = 1.0f, content: @Composable () -> Unit) {
         compose.setContent {
             ScamSenseTheme(darkTheme = dark, textScale = scale) {
                 Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -204,6 +204,9 @@ class ScreenRenderTest {
                 )
             }
         }
+        // Built-in pairing is the main path; Shizuku is an alternative behind a toggle.
+        compose.onNodeWithText("เริ่มจับคู่").assertExists()
+        compose.onNodeWithText("หรือใช้แอป Shizuku แทน (ทางเลือก)").performClick()
         compose.onNodeWithText("ดูวิธีเปิด Shizuku ทีละขั้น").performClick()
         compose.onNodeWithText("พิมพ์รหัส 6 หลักลงในการแจ้งเตือนของ Shizuku").assertExists()
     }

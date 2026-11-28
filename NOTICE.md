@@ -27,3 +27,12 @@ use the names or logos of those projects for publicity.
 | [IBM Plex Sans Thai](https://github.com/IBM/plex) | SIL OFL 1.1 (`licenses/`) | App font |
 | AndroidX / Jetpack Compose, Kotlin, Ktor, kotlinx.serialization | Apache-2.0 | App & server |
 | sqlite-jdbc | Apache-2.0 | Server storage |
+
+
+## Built-in mode (no Shizuku app) — `libadb/`
+Vendored unmodified in the separate `:libadb` module; licence texts in `libadb/licenses/`.
+- **libadb-android** by Muntashir Al-Islam — https://github.com/MuntashirAkon/libadb-android (commit c849886).
+  Licensed GPL-3.0-or-later OR Apache-2.0 (used here under GPL-3.0-or-later); some files additionally BSD-3-Clause or MIT.
+- **spake2-java** (pure-Java module) by Muntashir Al-Islam — https://github.com/MuntashirAkon/spake2-java (commit c24e0aa). LGPL-3.0.
+- **Conscrypt** (org.conscrypt:conscrypt-android) — Apache-2.0.
+- **Bouncy Castle** (bcprov / bcpkix) — MIT-style Bouncy Castle licence.

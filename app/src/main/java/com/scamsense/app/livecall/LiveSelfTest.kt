@@ -30,7 +30,7 @@ object LiveSelfTest {
     suspend fun run(context: Context, model: WhisperModel, recordSeconds: Int = 6, onPhase: (String) -> Unit = {}): Outcome {
         if (!WhisperNative.isAvailable) return Outcome.Failed("เครื่องนี้ไม่รองรับตัวแปลงเสียง")
         if (!WhisperModels.isInstalled(context, model)) return Outcome.Failed("ยังไม่ได้ดาวน์โหลดโมเดล")
-        if (ShizukuGate.status(context) != ShizukuGate.Status.READY) return Outcome.Failed("Shizuku ยังไม่พร้อม")
+        if (!ShellAudio.isAvailable(context)) return Outcome.Failed("ยังไม่ได้จับคู่ (ทำข้อ \"จับคู่ในแอป\" ด้านบนก่อน)")
 
         onPhase("กำลังเชื่อมต่อตัวดึงเสียง… (ยังไม่ต้องพูด)")
         val opened = withContext(Dispatchers.IO) { ShellAudio.open(context, MediaRecorder.AudioSource.MIC, RATE) }

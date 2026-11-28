@@ -24,8 +24,8 @@ android {
         applicationId = "com.scamsense.app"
         minSdk = 23          // Android 6.0+ (~99% of active devices); needed for Keystore AES-GCM
         targetSdk = 35
-        versionCode = 15
-        versionName = "1.5.0"
+        versionCode = 16
+        versionName = "1.6.0"
         vectorDrawables.useSupportLibrary = true
         @Suppress("UnstableApiUsage")
         resourceConfigurations += listOf("th", "en")
@@ -120,6 +120,8 @@ kotlin {
 
 dependencies {
     implementation(project(":core"))
+    implementation(project(":libadb"))
+    implementation(libs.bouncycastle.pkix)
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.shizuku.api)
     implementation(libs.shizuku.provider)
@@ -145,4 +147,10 @@ dependencies {
     testImplementation(libs.androidx.test.ext.junit)
     testImplementation(platform(libs.androidx.compose.bom))
     testImplementation(libs.androidx.compose.ui.test.junit4)
+}
+
+// Robolectric brings an older BouncyCastle (bcprov-jdk18on) with the same classes as the
+// app's bcprov-jdk15to18; on the unit-test classpath it shadows the newer one. Tests only.
+configurations.matching { it.name.contains("UnitTest") }.configureEach {
+    exclude(group = "org.bouncycastle", module = "bcprov-jdk18on")
 }

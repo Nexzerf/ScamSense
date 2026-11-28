@@ -133,9 +133,10 @@ class LiveCallService : Service() {
             if (!WhisperModels.isInstalled(this@LiveCallService, model) || !WhisperNative.isAvailable) {
                 notifyStatus("ยังฟังไม่ได้: ไม่มีโมเดลแปลงเสียง", RiskLevel.SUSPICIOUS, false); return@launch
             }
-            if (ShizukuGate.status(this@LiveCallService) != ShizukuGate.Status.READY) {
-                notifyStatus("ยังฟังไม่ได้: Shizuku ไม่ทำงาน (ต้องเปิดใหม่หลังรีสตาร์ทเครื่อง)", RiskLevel.SUSPICIOUS, false); return@launch
+            if (!ShellAudio.isAvailable(this@LiveCallService)) {
+                notifyStatus("ยังฟังไม่ได้: ยังไม่ได้ตั้งค่าการฟังในหน้าป้องกันสายโทร", RiskLevel.SUSPICIOUS, false); return@launch
             }
+            notifyStatus("กำลังเตรียมการฟัง…", RiskLevel.SAFE, false)
             val opened = kotlinx.coroutines.withContext(Dispatchers.IO) {
                 ShellAudio.open(this@LiveCallService, MediaRecorder.AudioSource.VOICE_DOWNLINK, SAMPLE_RATE)
             }
@@ -245,7 +246,7 @@ class LiveCallService : Service() {
     private fun hangUpNow() {
         hangUpJob?.cancel()
         scope.launch(Dispatchers.IO) {
-            val ok = ShellAudio.endCall()
+            val ok = ShellAudio.endCall(this@LiveCallService)
             if (!ok) notifyStatus("วางสายอัตโนมัติไม่สำเร็จ กรุณากดวางสายเอง", RiskLevel.DANGEROUS, withActions = false)
         }
     }

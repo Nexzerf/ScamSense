@@ -13,6 +13,13 @@
         - SMS / calls / call-forwarding codes open the user's own apps (no SEND_SMS / CALL_PHONE).
     -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Built-in mode: Wireless debugging only works on Wi‑Fi, so check before trying. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Granted once over ADB after built-in pairing (never by the system to normal apps):
+         lets ScamSense switch Wireless debugging back on by itself, e.g. after a reboot. -->
+    <uses-permission
+        android:name="android.permission.WRITE_SECURE_SETTINGS"
+        tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Live in-call listening (opt-in, Android 11+, requires Shizuku):
          READ_PHONE_STATE only to know when a call is answered / ended (no call log, no numbers). -->
@@ -87,6 +94,15 @@
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="Listens to an ongoing phone call from an unknown number to warn the user about scams in real time" />
+        </service>
+
+        <service
+            android:name=".livecall.adb.PairingService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="One-time pairing with the phone's own Wireless debugging so the call listener works without a separate app" />
         </service>
 
         <!-- Shizuku binder delivery (https://github.com/RikkaApps/Shizuku-API) -->
