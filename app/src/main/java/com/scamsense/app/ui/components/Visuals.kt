@@ -8,6 +8,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,6 +21,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
@@ -29,7 +31,9 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
@@ -179,3 +183,81 @@ fun SegmentedGauge(
         }
     }
 }
+
+/** Rounded square icon with a soft gradient wash in [tint]. */
+@Composable
+fun IconChip(icon: androidx.compose.ui.graphics.vector.ImageVector, tint: Color, size: Dp = 48.dp) {
+    Box(
+        Modifier
+            .size(size)
+            .clip(RoundedCornerShape(size * 0.34f))
+            .drawBehind { drawRect(Brush.linearGradient(listOf(tint.copy(alpha = 0.22f), tint.copy(alpha = 0.06f)))) },
+        contentAlignment = Alignment.Center,
+    ) {
+        androidx.compose.material3.Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(size * 0.56f))
+    }
+}
+
+
+/** Small ring that shows a score as an arc, coloured by level. */
+@Composable
+fun ScoreRing(score: Int, color: Color, modifier: Modifier = Modifier, size: Dp = 58.dp) {
+    val track = MaterialTheme.colorScheme.outlineVariant
+    Box(modifier.size(size), contentAlignment = Alignment.Center) {
+        Canvas(Modifier.size(size)) {
+            val w = 5.dp.toPx()
+            val inset = w / 2
+            val arcSize = androidx.compose.ui.geometry.Size(this.size.width - w, this.size.height - w)
+            drawArc(track, -90f, 360f, false, Offset(inset, inset), arcSize, style = Stroke(w))
+            drawArc(color, -90f, 360f * score.coerceIn(0, 100) / 100f, false, Offset(inset, inset), arcSize, style = Stroke(w, cap = StrokeCap.Round))
+        }
+        Text(score.toString(), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+    }
+}
+
+/**
+ * Large selectable pill (filters, choices). Selected = navy (lime in dark mode) so the
+ * state is obvious without relying on a thin outline.
+ */
+@Composable
+fun ChoicePill(
+    text: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    leading: (@Composable () -> Unit)? = null,
+) {
+    val dark = MaterialTheme.colorScheme.background.luminanceCompat() < 0.3f
+    val bg = when {
+        selected && dark -> Lime
+        selected -> com.scamsense.app.ui.theme.Navy900
+        else -> MaterialTheme.colorScheme.surface
+    }
+    val fg = when {
+        selected && dark -> com.scamsense.app.ui.theme.Navy900
+        selected -> Color.White
+        else -> MaterialTheme.colorScheme.onSurface
+    }
+    androidx.compose.material3.Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(28.dp),
+        color = bg,
+        contentColor = fg,
+        border = if (selected) null else BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        modifier = modifier
+            .heightIn(min = 52.dp)
+            .semantics { this.selected = selected },
+    ) {
+        androidx.compose.foundation.layout.Row(
+            Modifier.padding(horizontal = 18.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = androidx.compose.foundation.layout.Arrangement.Center,
+        ) {
+            leading?.invoke()
+            if (leading != null) androidx.compose.foundation.layout.Spacer(Modifier.size(8.dp))
+            Text(text, style = MaterialTheme.typography.labelLarge, color = fg)
+        }
+    }
+}
+
+private fun Color.luminanceCompat(): Float = this.luminance()

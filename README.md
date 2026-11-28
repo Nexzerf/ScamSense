@@ -9,7 +9,7 @@
 | แพลตฟอร์ม | Android 6.0 (API 23) – Android 15 (API 35) • มือถือ/แท็บเล็ต • โหมดสว่าง/มืด |
 | ความเป็นส่วนตัว | ตรวจข้อความ/ลิงก์/เบอร์ในเครื่อง 100% • อินเทอร์เน็ตใช้เฉพาะเมื่อจับคู่ผู้ช่วย AI รับสาย (HTTPS) |
 | ภาษา | ไทย (ฟอนต์ IBM Plex Sans Thai ฝังในแอป) |
-| ไฟล์ส่งมอบ | `dist/ScamSense-v1.4.0.apk` • `mockup/ScamSense-Mockup.html` • เซิร์ฟเวอร์ผู้ช่วย AI: `server/` |
+| ไฟล์ส่งมอบ | `dist/ScamSense-v1.4.1.apk` • `mockup/ScamSense-Mockup.html` • เซิร์ฟเวอร์ผู้ช่วย AI: `server/` |
 
 ## ฟีเจอร์
 

@@ -228,6 +228,12 @@ private fun AppNavigation(vm: MainViewModel, nav: NavHostController = rememberNa
                     saveHistory = settings.saveHistory,
                     onOpen = { vm.openHistoryItem(it) },
                     onClearAll = { vm.clearHistory(); toast("ลบประวัติแล้ว") },
+                    onStartCheck = {
+                        nav.navigate(Routes.HOME) {
+                            popUpTo(nav.graph.findStartDestination().id) { saveState = true }
+                            launchSingleTop = true
+                        }
+                    },
                 )
             }
             composable(Routes.SETTINGS) {

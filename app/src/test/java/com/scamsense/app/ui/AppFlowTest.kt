@@ -70,7 +70,7 @@ class AppFlowTest {
         waitForText("วันนี้มีอะไรน่าสงสัยไหม?")
         // History tab shows the check we just made.
         compose.onNodeWithText("ประวัติ").performClick()
-        waitForText("ประวัติการตรวจ (1)")
+        waitForText("ทั้งหมด 1")
         screenshot("21_flow_history")
     }
 
