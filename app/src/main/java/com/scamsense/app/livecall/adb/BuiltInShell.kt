@@ -83,33 +83,65 @@ object BuiltInShell {
         data class Failed(val reason: String, val userMessage: String) : Result
     }
 
+    /** What the user typed: the 6-digit code, optionally with the pairing port shown in the dialog. */
+    data class PairingInput(val code: String, val port: Int?)
+
+    /**
+     * Accepts "123456", "123456 41235", "41235 123456" or "192.168.1.5:41235 123456".
+     * The 6-digit group is the code; a 4–5 digit group (or the number after ':') is the port.
+     */
+    fun parsePairingInput(raw: String): PairingInput? {
+        val afterColon = Regex(":(\\d{4,5})").find(raw)?.groupValues?.get(1)?.toIntOrNull()
+        val withoutIp = raw.replace(Regex("\\d{1,3}(\\.\\d{1,3}){3}"), " ")
+        val groups = Regex("\\d+").findAll(withoutIp).map { it.value }.toList()
+        val code = groups.firstOrNull { it.length == 6 } ?: return null
+        val port = afterColon ?: groups.firstOrNull { it != code && it.length in 4..5 }?.toIntOrNull()
+        return PairingInput(code, port?.takeIf { it in 1024..65535 })
+    }
+
     /** Pairs with the code shown in Settings → Wireless debugging → Pair with pairing code, then sets up. Blocking. */
     fun pairAndSetup(context: Context, code: String): Result {
         val app = context.applicationContext
         AdbLog.add("pair: start (Android ${Build.VERSION.SDK_INT}, ${Build.MANUFACTURER} ${Build.MODEL})")
         if (!isSupported()) return fail("api", "ต้องใช้ Android 11 ขึ้นไป")
-        val digits = code.filter { it.isDigit() }
-        if (digits.length != 6) return fail("code-format", "รหัสจับคู่ต้องเป็นตัวเลข 6 หลัก")
+        val input = parsePairingInput(code) ?: return fail("code-format", "รหัสจับคู่ต้องเป็นตัวเลข 6 หลัก")
+        val digits = input.code
         if (!onWifi(app)) return fail("no-wifi", "ต้องต่อ Wi‑Fi ก่อน (การแก้ไขข้อบกพร่องแบบไร้สายใช้ได้เฉพาะบน Wi‑Fi)")
 
         val mgr = runCatching { managerFor(app) }.getOrElse { return fail("keys: ${it.javaClass.simpleName}", "สร้างกุญแจไม่สำเร็จ") }
         val hosts = candidateHosts(app)
-        val mdnsPort = mdnsPort(app, AdbMdns.SERVICE_TYPE_TLS_PAIRING, 4_000)
-        AdbLog.add("pair: mDNS pairing port = ${mdnsPort ?: "not found"}")
-        val attempts = buildList {
-            if (mdnsPort != null) hosts.forEach { add(it to mdnsPort) }
-            hosts.forEach { h -> scanOpenPorts(h).filter { it != mdnsPort }.forEach { add(h to it) } }
-        }
-        AdbLog.add("pair: ${attempts.size} candidate(s): ${attempts.take(8).joinToString { "${it.first}:${it.second}" }}")
-        if (attempts.isEmpty()) return fail("pair-port", "ไม่พบหน้าต่างจับคู่ ให้เปิด \"จับคู่อุปกรณ์ด้วยรหัสจับคู่\" ค้างไว้ แล้วใส่รหัสใหม่")
-
+        AdbLog.add("pair: hosts $hosts, typed port ${input.port ?: "-"}")
+        val prefs = app.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val tried = HashSet<Pair<String, Int>>()
         var paired = false
-        for ((host, port) in attempts.distinct()) {
+        // The pairing server listens on the Wi‑Fi address; try it before loopback.
+        val ordered = hosts.sortedBy { it == LOCALHOST }
+        fun tryPair(host: String, port: Int): Boolean {
+            if (!tried.add(host to port)) return false
             val ok = withTimeout(10_000) { mgr.pair(host, port, digits) }
-            AdbLog.add("pair: $host:$port -> ${ok ?: "timeout"}")
-            if (ok == true) { paired = true; break }
+            AdbLog.add("pair: $host:$port -> ${ok ?: "failed"}")
+            if (ok != true && lastError?.contains("SSLHandshake") == true) {
+                // A TLS port that is not the pairing server is very likely adbd's connect port.
+                prefs.edit().putInt(KEY_PORT, port).apply()
+            }
+            return ok == true
         }
-        if (!paired) return fail("pair", "จับคู่ไม่สำเร็จ ตรวจรหัสอีกครั้ง (รหัสเปลี่ยนทุกครั้งที่เปิดหน้าต่างจับคู่)")
+        // 1) the port the user typed (shown in the pairing dialog)
+        input.port?.let { p -> paired = ordered.any { tryPair(it, p) } }
+        // 2) mDNS
+        if (!paired) {
+            val mdnsPort = mdnsPort(app, AdbMdns.SERVICE_TYPE_TLS_PAIRING, 3_000)
+            AdbLog.add("pair: mDNS pairing port = ${mdnsPort ?: "not found"}")
+            if (mdnsPort != null) paired = ordered.any { tryPair(it, mdnsPort) }
+        }
+        // 3) scan this phone's own addresses
+        if (!paired) {
+            outer@ for (h in ordered) for (p in scanOpenPorts(h)) if (tryPair(h, p)) { paired = true; break@outer }
+        }
+        if (!paired && tried.isEmpty()) {
+            return fail("pair-port", "ไม่พบหน้าต่างจับคู่ ให้เปิด \"จับคู่อุปกรณ์ด้วยรหัสจับคู่\" ค้างไว้ แล้วใส่รหัสพร้อมเลขพอร์ต")
+        }
+        if (!paired) return fail("pair", "จับคู่ไม่สำเร็จ ลองใส่รหัสพร้อมเลขพอร์ตจากหน้าต่างจับคู่ เช่น 123456 41235 (รหัสเปลี่ยนทุกครั้งที่เปิดหน้าต่าง)")
         app.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(KEY_PAIRED, true).apply()
 
         // Pairing dialog closes after success; give adbd a moment before connecting.
@@ -216,10 +248,22 @@ object BuiltInShell {
         return found
     }
 
-    /** Loopback first; some builds bind adbd only to the Wi‑Fi address. */
-    private fun candidateHosts(context: Context): List<String> {
-        val wifi = runCatching { io.github.muntashirakon.adb.android.AndroidUtils.getHostIpAddress(context) }.getOrNull()
-        return listOfNotNull(LOCALHOST, wifi?.takeIf { it.isNotBlank() && it != "0.0.0.0" && it != LOCALHOST }).distinct()
+    /**
+     * Loopback plus this phone's own IPv4 addresses (Wi‑Fi first). adbd's connect port answers
+     * on loopback, but the pairing server may listen only on the Wi‑Fi address. (libadb's
+     * getHostIpAddress() returns loopback, so interfaces are listed directly.)
+     */
+    private fun candidateHosts(@Suppress("UNUSED_PARAMETER") context: Context): List<String> {
+        val own = runCatching {
+            java.net.NetworkInterface.getNetworkInterfaces().toList()
+                .filter { it.isUp && !it.isLoopback }
+                .sortedBy { if (it.name.startsWith("wlan")) 0 else 1 }
+                .flatMap { it.inetAddresses.toList() }
+                .filterIsInstance<java.net.Inet4Address>()
+                .map { it.hostAddress.orEmpty() }
+                .filter { it.isNotBlank() }
+        }.getOrDefault(emptyList())
+        return (listOf(LOCALHOST) + own).distinct()
     }
 
     /**
@@ -229,25 +273,26 @@ object BuiltInShell {
      */
     fun scanOpenPorts(host: String, from: Int = 30_000, to: Int = 65_535): List<Int> {
         val started = System.currentTimeMillis()
-        val pool = Executors.newFixedThreadPool(64)
+        val pool = Executors.newFixedThreadPool(192)
         val open = java.util.concurrent.ConcurrentLinkedQueue<Int>()
         val addr = runCatching { InetAddress.getByName(host) }.getOrNull() ?: return emptyList()
-        val step = 512
+        val step = 256
         var p = from
         while (p <= to) {
             val a = p
             val b = minOf(p + step - 1, to)
             pool.execute {
                 for (port in a..b) {
-                    runCatching { Socket().use { it.connect(InetSocketAddress(addr, port), 150); open += port } }
+                    runCatching { Socket().use { it.connect(InetSocketAddress(addr, port), 60); open += port } }
                 }
             }
             p += step
         }
         pool.shutdown()
-        pool.awaitTermination(30, TimeUnit.SECONDS)
+        val finished = pool.awaitTermination(40, TimeUnit.SECONDS)
+        if (!finished) pool.shutdownNow()
         val ports = open.sorted()
-        AdbLog.add("scan $host: ${ports.size} open in ${System.currentTimeMillis() - started} ms ${ports.take(10)}")
+        AdbLog.add("scan $host: ${ports.size} open in ${System.currentTimeMillis() - started} ms${if (finished) "" else " (partial)"} ${ports.take(10)}")
         return ports
     }
 
@@ -301,13 +346,17 @@ object BuiltInShell {
     }
 
     /** Runs [block] on a worker with a hard deadline (libadb has no timeout for every step). */
+    @Volatile private var lastError: String? = null
+
     private fun <T> withTimeout(ms: Long, block: () -> T): T? {
         val ex = Executors.newSingleThreadExecutor()
+        lastError = null
         return try {
             ex.submit<T> { block() }.get(ms, TimeUnit.MILLISECONDS)
         } catch (e: Exception) {
             val cause = (e.cause ?: e)
-            if (e !is java.util.concurrent.TimeoutException) AdbLog.add("  error: ${cause.javaClass.simpleName}: ${cause.message?.take(120)}")
+            lastError = if (e is java.util.concurrent.TimeoutException) "timeout" else "${cause.javaClass.simpleName}: ${cause.message?.take(120)}"
+            AdbLog.add("  error: $lastError")
             null
         } finally {
             ex.shutdownNow()

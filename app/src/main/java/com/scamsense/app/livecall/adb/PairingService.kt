@@ -96,14 +96,14 @@ class PairingService : Service() {
             _state.value = State.Waiting
             context.getSystemService(NotificationManager::class.java)?.notify(
                 NOTIFICATION_ID,
-                codeRequest(context, "ใส่รหัสจับคู่ 6 หลัก ที่นี่",
-                    "ในหน้าการแก้ไขข้อบกพร่องแบบไร้สาย แตะ \"จับคู่อุปกรณ์ด้วยรหัสจับคู่\" แล้วพิมพ์รหัสที่เห็นลงในช่องนี้"),
+                codeRequest(context, "ใส่รหัสจับคู่ และเลขพอร์ต ที่นี่",
+                    "แตะ \"จับคู่อุปกรณ์ด้วยรหัสจับคู่\" แล้วพิมพ์รหัส 6 หลัก เว้นวรรค ตามด้วยตัวเลขหลังเครื่องหมาย : ในบรรทัด IP เช่น 123456 41235"),
             )
         }
 
         @androidx.annotation.RequiresApi(Build.VERSION_CODES.R)
         private fun codeRequest(context: Context, title: String, text: String) = run {
-            val remoteInput = RemoteInput.Builder(KEY_CODE).setLabel("รหัส 6 หลัก").build()
+            val remoteInput = RemoteInput.Builder(KEY_CODE).setLabel("รหัส เว้นวรรค พอร์ต เช่น 123456 41235").build()
             // Mutable: the system writes the typed code into this intent.
             val pi = PendingIntent.getForegroundService(
                 context, 1, Intent(context, PairingService::class.java),

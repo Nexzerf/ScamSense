@@ -56,4 +56,15 @@ class BuiltInShellTest {
         BuiltInShell.forget(context)
         assertFalse(BuiltInShell.isPaired(context))
     }
+
+    @Test fun pairingInputAcceptsCodeWithOrWithoutPort() {
+        fun p(s: String) = BuiltInShell.parsePairingInput(s)
+        assertEquals(BuiltInShell.PairingInput("123456", null), p("123456"))
+        assertEquals(BuiltInShell.PairingInput("123456", 41235), p("123456 41235"))
+        assertEquals(BuiltInShell.PairingInput("123456", 41235), p("41235 123456"))
+        assertEquals(BuiltInShell.PairingInput("123456", 41235), p("192.168.1.5:41235 123456"))
+        assertEquals(BuiltInShell.PairingInput("654321", 38001), p(" 654321 , 38001 "))
+        assertEquals(null, p("12345"))
+        assertEquals(BuiltInShell.PairingInput("123456", null), p("123456 80")) // not a valid adb port
+    }
 }
