@@ -57,7 +57,7 @@ class AppFlowTest {
     }
 
     @Test fun startupThenCheckMessageShowsDangerResult() {
-        waitForText("มีข้อความน่าสงสัยไหม?")
+        waitForText("วันนี้มีอะไรน่าสงสัยไหม?")
         compose.onNodeWithText("พิมพ์หรือวางข้อความ").performClick()
         waitForText("ตรวจข้อความ")
         compose.onNode(hasSetTextAction()).performTextInput(
@@ -67,7 +67,7 @@ class AppFlowTest {
         waitForText("หยุด! อย่าทำตามข้อความนี้")
         screenshot("20_flow_result")
         compose.onNodeWithText("ตรวจรายการอื่น").performScrollTo().performClick()
-        waitForText("มีข้อความน่าสงสัยไหม?")
+        waitForText("วันนี้มีอะไรน่าสงสัยไหม?")
         // History tab shows the check we just made.
         compose.onNodeWithText("ประวัติ").performClick()
         waitForText("ประวัติการตรวจ (1)")
@@ -75,7 +75,7 @@ class AppFlowTest {
     }
 
     @Test fun emptyPhoneInputShowsFriendlyError() {
-        waitForText("มีข้อความน่าสงสัยไหม?")
+        waitForText("วันนี้มีอะไรน่าสงสัยไหม?")
         compose.onNodeWithText("เบอร์โทร").performClick()
         waitForText("ตรวจเบอร์โทร")
         compose.onNode(hasSetTextAction()).performTextInput("ไม่มีเบอร์")
@@ -84,7 +84,7 @@ class AppFlowTest {
     }
 
     @Test fun sharedTextFromAnotherAppIsCheckedAutomatically() {
-        waitForText("มีข้อความน่าสงสัยไหม?")
+        waitForText("วันนี้มีอะไรน่าสงสัยไหม?")
         run {
             activity.onNewIntent(
                 Intent(Intent.ACTION_SEND).setType("text/plain")
@@ -95,7 +95,7 @@ class AppFlowTest {
     }
 
     @Test fun maliciousShareIntentWithHugeTextDoesNotCrash() {
-        waitForText("มีข้อความน่าสงสัยไหม?")
+        waitForText("วันนี้มีอะไรน่าสงสัยไหม?")
         run {
             activity.onNewIntent(
                 Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, "\u0000ด่วน".repeat(200_000)),
