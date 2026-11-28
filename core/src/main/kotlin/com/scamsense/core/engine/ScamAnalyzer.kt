@@ -22,7 +22,8 @@ class ScamAnalyzer(
         analyze(CheckType.MESSAGE, "บัญชีของคุณถูกระงับ กรุณากรอกรหัส OTP ที่ https://example.xyz ด่วน 0812345678")
     }
 
-    fun analyze(type: CheckType, rawInput: String, rules: UserRules = UserRules()): AnalysisOutcome {
+    /** @param speech true for speech-recognition transcripts: enables sound-alike matching. */
+    fun analyze(type: CheckType, rawInput: String, rules: UserRules = UserRules(), speech: Boolean = false): AnalysisOutcome {
         val input = TextNormalizer.sanitizeInput(rawInput)
         val started = System.nanoTime()
         return when (type) {
@@ -30,7 +31,7 @@ class ScamAnalyzer(
                 if (TextNormalizer.compact(TextNormalizer.normalize(input)).length < 2) {
                     AnalysisOutcome.Invalid("กรุณาพิมพ์ วาง หรือพูดข้อความที่ต้องการตรวจ")
                 } else {
-                    AnalysisOutcome.Success(analyzeText(type, input, rules, started))
+                    AnalysisOutcome.Success(analyzeText(type, input, rules, started, speech))
                 }
             }
             CheckType.LINK -> {
@@ -55,8 +56,8 @@ class ScamAnalyzer(
 
     // ------------------------------------------------------------------ text / links
 
-    private fun analyzeText(type: CheckType, input: String, rules: UserRules, started: Long): RiskResult {
-        val ctx = TextContext(input)
+    private fun analyzeText(type: CheckType, input: String, rules: UserRules, started: Long, speech: Boolean = false): RiskResult {
+        val ctx = TextContext(input, speech)
         val signals = mutableListOf<RiskSignal>()
         var block = false
 
@@ -157,7 +158,9 @@ class ScamAnalyzer(
 
     private fun isGenuineOtpNotice(ctx: TextContext): Boolean {
         val mentionsCode = "otp" in ctx.latinTokens || ctx.compact.contains("รหัส")
-        val tellsNotToShare = KnowledgeBase.otpNoticePhrases.any { ctx.compact.contains(it) }
+        val tellsNotToShare = KnowledgeBase.otpNoticePhrases.any {
+            ctx.compact.contains(it) || (ctx.speech && ctx.soundKey.contains(TextNormalizer.thaiSoundKey(it)))
+        }
         val hasCode = ctx.latinTokens.any { t -> t.length in 4..8 && t.all { it.isDigit() } }
         return mentionsCode && tellsNotToShare && hasCode && UrlAnalyzer.extract(ctx.original).isEmpty()
     }

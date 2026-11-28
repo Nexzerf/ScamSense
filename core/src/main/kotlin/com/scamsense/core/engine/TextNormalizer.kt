@@ -163,6 +163,34 @@ object TextNormalizer {
         return sb.toString()
     }
 
+    /**
+     * Sound-alike key for Thai, used only for speech transcripts: speech recognition often
+     * picks the wrong letter of a same-sounding group (ศ/ษ/ส, ธ/ท, ณ/น, ร/ล …) or drops
+     * tone marks. Collapsing those makes "บันชีปลอดพัย" match "บัญชีปลอดภัย".
+     */
+    fun thaiSoundKey(compact: String): String {
+        val sb = StringBuilder(compact.length)
+        for (c in compact) {
+            when (c) {
+                '\u0E48', '\u0E49', '\u0E4A', '\u0E4B', '\u0E4C', '\u0E47' -> Unit // tone marks, thanthakhat, maitaikhu
+                'ศ', 'ษ', 'ซ' -> sb.append('ส')
+                'ฎ' -> sb.append('ด')
+                'ฏ' -> sb.append('ต')
+                'ฐ', 'ฑ', 'ฒ', 'ธ', 'ถ' -> sb.append('ท')
+                'ณ' -> sb.append('น')
+                'ญ' -> sb.append('ย')
+                'ภ', 'ผ' -> sb.append('พ')
+                'ฝ' -> sb.append('ฟ')
+                'ข', 'ฃ', 'ฅ', 'ฆ' -> sb.append('ค')
+                'ฉ', 'ฌ' -> sb.append('ช')
+                'ร', 'ฬ' -> sb.append('ล')
+                'ใ' -> sb.append('ไ')
+                else -> sb.append(c)
+            }
+        }
+        return sb.toString()
+    }
+
     fun preview(text: String, maxChars: Int = 280): String {
         val masked = maskSensitiveDigits(text.trim())
         return if (masked.length <= maxChars) masked else masked.take(maxChars).trimEnd() + "…"
@@ -170,8 +198,10 @@ object TextNormalizer {
 }
 
 /** Pre-computed views of one input text, shared by all analyzers. */
-class TextContext(val original: String) {
+class TextContext(val original: String, val speech: Boolean = false) {
     val normalized: String = TextNormalizer.normalize(original)
     val compact: String = TextNormalizer.compact(normalized)
     val latinTokens: Set<String> = TextNormalizer.latinTokens(normalized)
+    /** Only for speech transcripts (see [TextNormalizer.thaiSoundKey]). */
+    val soundKey: String by lazy { TextNormalizer.thaiSoundKey(compact) }
 }

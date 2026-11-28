@@ -37,7 +37,7 @@ class LiveCallMonitor(
         val text = clean(raw) ?: return Update(Action.NONE, lastResult)
         lines += text
         val window = lines.takeLast(windowLines).joinToString(" ")
-        val result = (analyzer.analyze(CheckType.MESSAGE, window) as? AnalysisOutcome.Success)?.result
+        val result = (analyzer.analyze(CheckType.MESSAGE, window, speech = true) as? AnalysisOutcome.Success)?.result
             ?: return Update(Action.NONE, lastResult)
         lastResult = result
         val wanted = when {

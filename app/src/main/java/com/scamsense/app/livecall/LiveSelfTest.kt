@@ -54,7 +54,7 @@ object LiveSelfTest {
                 val text = WhisperNative.load(WhisperModels.file(context, model).path)?.use { it.transcribe(floats, "th") }
                     ?: return@withContext Outcome.Failed("โหลดโมเดลแปลงเสียงไม่สำเร็จ ลองลบแล้วดาวน์โหลดใหม่")
                 val secs = (SystemClock.elapsedRealtime() - started) / 1000f
-                val result = (ScamAnalyzer().analyze(CheckType.MESSAGE, text) as? AnalysisOutcome.Success)?.result
+                val result = (ScamAnalyzer().analyze(CheckType.MESSAGE, text, speech = true) as? AnalysisOutcome.Success)?.result
                 Outcome.Heard(text, secs, pcm.size / RATE.toFloat(), result)
             }
         } finally {

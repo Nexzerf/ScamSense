@@ -10,12 +10,17 @@ package com.scamsense.core.engine
  *    spaces/punctuation used for obfuscation ("บ.ช. ธนาคาร").
  *  - Thai terms of 7+ characters additionally allow one typo/edit (approximate substring
  *    matching, Sellers' algorithm, O(n·m)), catching deliberate misspellings.
+ *  - Speech transcripts only: a last pass compares Thai sound-alike keys, allowing one edit
+ *    for terms of 8+ letters and two for 14+, because speech recognition misspells Thai.
  */
 class KeywordEngine(rules: List<KeywordRule>) {
 
     data class Hit(val rule: KeywordRule, val matchedTerm: String)
 
-    private class Term(val original: String, val compact: String, val tokenOnly: Boolean, val fuzzy: Boolean)
+    private class Term(val original: String, val compact: String, val tokenOnly: Boolean, val fuzzy: Boolean) {
+        val soundKey: String = TextNormalizer.thaiSoundKey(compact)
+        val thaiLetters: Int = compact.count { TextNormalizer.isThai(it) }
+    }
 
     private class CompiledRule(val rule: KeywordRule, val terms: List<Term>)
 
@@ -49,11 +54,25 @@ class KeywordEngine(rules: List<KeywordRule>) {
         // Exact pass first (cheap), then the fuzzy pass only if needed.
         rule.terms.firstOrNull { exactMatch(it, ctx) }?.let { return Hit(rule.rule, it.original) }
         rule.terms.firstOrNull { it.fuzzy && fuzzyMatch(it, ctx) }?.let { return Hit(rule.rule, it.original) }
+        if (ctx.speech) rule.terms.firstOrNull { soundMatch(it, ctx) }?.let { return Hit(rule.rule, it.original) }
         return null
     }
 
     private fun termMatches(term: Term, ctx: TextContext) =
-        exactMatch(term, ctx) || (term.fuzzy && fuzzyMatch(term, ctx))
+        exactMatch(term, ctx) || (term.fuzzy && fuzzyMatch(term, ctx)) || (ctx.speech && soundMatch(term, ctx))
+
+    private fun soundMatch(term: Term, ctx: TextContext): Boolean {
+        if (term.tokenOnly || term.thaiLetters < 4) return false
+        val key = ctx.soundKey
+        val text = if (key.length > FUZZY_WINDOW) key.substring(0, FUZZY_WINDOW) else key
+        if (text.contains(term.soundKey)) return true
+        val edits = when {
+            term.soundKey.length >= 14 -> 2
+            term.soundKey.length >= 8 -> 1
+            else -> 0
+        }
+        return edits > 0 && approxContains(text, term.soundKey, edits)
+    }
 
     private fun exactMatch(term: Term, ctx: TextContext): Boolean =
         if (term.tokenOnly) term.compact in ctx.latinTokens else ctx.compact.contains(term.compact)
