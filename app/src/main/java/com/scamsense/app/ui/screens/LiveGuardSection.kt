@@ -38,6 +38,7 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -190,10 +191,6 @@ fun LiveGuardSection(
                 }
             }
             Text(model.label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            if (model.hfRepo != null && state.nativeAvailable && downloadProgress == null) {
-                Spacer(Modifier.height(6.dp))
-                ImportModel(installed = state.modelInstalled, onDone = onRefresh)
-            }
             if (!state.modelInstalled && state.nativeAvailable) {
                 Spacer(Modifier.height(8.dp))
                 if (downloadProgress != null) {
@@ -212,6 +209,11 @@ fun LiveGuardSection(
                         icon = Icons.Rounded.Download, onClick = { onDownloadModel(model) },
                     )
                 }
+            }
+            // Optional, for people who converted the model on a PC: kept small and last so the
+            // one-tap download above is the obvious path.
+            if (model.hfRepo != null && state.nativeAvailable && downloadProgress == null) {
+                ImportModel(installed = state.modelInstalled, onDone = onRefresh)
             }
             if (state.shizuku == ShizukuGate.Status.READY && state.modelInstalled && state.nativeAvailable) {
                 Spacer(Modifier.height(12.dp))
@@ -394,15 +396,14 @@ private fun ImportModel(installed: Boolean, onDone: () -> Unit) {
         Text(phase.orEmpty(), style = MaterialTheme.typography.bodySmall)
         return
     }
-    BigOutlinedButton(
-        if (installed) "นำเข้าไฟล์โมเดลใหม่แทนของเดิม" else "นำเข้าไฟล์โมเดล Thonburian (.bin)",
-        icon = Icons.Rounded.Download,
+    TextButton(
         onClick = { picker.launch(arrayOf("application/octet-stream", "*/*")) },
-    )
-    Text(
-        "แปลงโมเดลบนคอมด้วยสคริปต์ tools/convert_thonburian.py แล้วคัดลอกไฟล์ .bin มาไว้ในมือถือ " +
-            "(เช่น adb push ไฟล์ /sdcard/Download/) แอปจะย่อขนาดให้อัตโนมัติ",
-        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
+        modifier = Modifier.heightIn(min = 48.dp),
+    ) {
+        Text(
+            if (installed) "สำหรับผู้พัฒนา: นำเข้าไฟล์ .bin แทนของเดิม" else "สำหรับผู้พัฒนา: มีไฟล์ .bin ที่แปลงไว้แล้ว? นำเข้าเอง (ไม่จำเป็น)",
+            style = MaterialTheme.typography.bodySmall,
+        )
+    }
     error?.let { Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
 }
