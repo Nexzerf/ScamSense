@@ -312,18 +312,20 @@ private fun SelfTest(model: WhisperModel, onUseFast: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var running by remember { mutableStateOf(false) }
+    var phase by remember { mutableStateOf("") }
     var outcome by remember(model) { mutableStateOf<LiveSelfTest.Outcome?>(null) }
     BigOutlinedButton(
-        if (running) "กำลังฟัง… พูดเลย แล้วรอผลสักครู่" else "ทดสอบการฟัง: กดแล้วพูดใส่มือถือ 6 วินาที",
+        if (running) phase.ifBlank { "กำลังเตรียม…" } else "ทดสอบการฟัง: กดแล้วพูดใส่มือถือ 6 วินาที",
         icon = Icons.Rounded.Hearing,
         onClick = {
             if (running || Build.VERSION.SDK_INT < Build.VERSION_CODES.R) return@BigOutlinedButton
             running = true
             outcome = null
             scope.launch {
-                outcome = runCatching { LiveSelfTest.run(context.applicationContext, model) }
+                outcome = runCatching { LiveSelfTest.run(context.applicationContext, model) { p -> scope.launch { phase = p } } }
                     .getOrElse { LiveSelfTest.Outcome.Failed("ทดสอบไม่สำเร็จ: ${it.javaClass.simpleName}") }
                 running = false
+                phase = ""
             }
         },
     )

@@ -30,28 +30,38 @@ object LiveSelfTest {
     }
 
     private const val RATE = 16_000
+    private const val BIND_TIMEOUT_MS = 30_000L
 
-    suspend fun run(context: Context, model: WhisperModel, recordSeconds: Int = 6): Outcome {
+    suspend fun run(context: Context, model: WhisperModel, recordSeconds: Int = 6, onPhase: (String) -> Unit = {}): Outcome {
         if (!WhisperNative.isAvailable) return Outcome.Failed("เครื่องนี้ไม่รองรับตัวแปลงเสียง")
         if (!WhisperModels.isInstalled(context, model)) return Outcome.Failed("ยังไม่ได้ดาวน์โหลดโมเดล")
         if (ShizukuGate.status(context) != ShizukuGate.Status.READY) return Outcome.Failed("Shizuku ยังไม่พร้อม")
 
+        onPhase("กำลังเชื่อมต่อตัวดึงเสียง… (ยังไม่ต้องพูด)")
         var conn: android.content.ServiceConnection? = null
-        val svc = withTimeoutOrNull(10_000) {
+        var error: String? = null
+        // Starting the helper process loads the whole APK in a fresh process: on budget
+        // phones the first start can take well over 10 s.
+        val svc = withTimeoutOrNull(BIND_TIMEOUT_MS) {
             withContext(Dispatchers.Main) { // Shizuku binding belongs on the main thread
                 suspendCancellableCoroutine<ICallAudioService?> { cont ->
-                    conn = ShizukuGate.bind(context) { s -> if (cont.isActive) cont.resume(s) }
+                    conn = ShizukuGate.bind(context, onError = { error = it }) { s -> if (cont.isActive) cont.resume(s) }
                 }
             }
         }
         try {
-            if (svc == null) return Outcome.Failed("เชื่อมต่อ Shizuku ไม่สำเร็จ ลองเปิดแอป Shizuku แล้วกดเริ่มใหม่")
+            if (svc == null) return Outcome.Failed(
+                "เชื่อมต่อตัวดึงเสียงผ่าน Shizuku ไม่สำเร็จ (รหัส: ${error ?: "timeout-${BIND_TIMEOUT_MS / 1000}s"}) " +
+                    "ลองกดทดสอบอีกครั้ง ถ้ายังไม่ได้ ให้ส่งรหัสนี้ให้ผู้พัฒนา",
+            )
+            onPhase("พูดเลย! กำลังฟัง $recordSeconds วินาที")
             val pcm = withContext(Dispatchers.IO) { record(svc, recordSeconds) }
                 ?: return Outcome.Failed("เปิดไมโครโฟนผ่าน Shizuku ไม่ได้")
             var peak = 0
             for (v in pcm) { val a = kotlin.math.abs(v.toInt()); if (a > peak) peak = a }
             if (peak < 200) return Outcome.Failed("ไม่ได้ยินเสียงเลย ลองพูดดังขึ้นใกล้ไมโครโฟน")
 
+            onPhase("กำลังแปลงเสียงเป็นข้อความ…")
             val floats = FloatArray(pcm.size) { pcm[it] / 32768f }
             return withContext(Dispatchers.Default) {
                 val started = SystemClock.elapsedRealtime()

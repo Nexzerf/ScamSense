@@ -80,16 +80,18 @@ object ShizukuGate {
         .version(BuildConfig.VERSION_CODE)
 
     /** Binds the shell helper; [onReady] receives null if it could not start. */
-    fun bind(context: Context, onReady: (ICallAudioService?) -> Unit): ServiceConnection? {
-        if (status(context) != Status.READY) { onReady(null); return null }
+    fun bind(context: Context, onError: (String) -> Unit = {}, onReady: (ICallAudioService?) -> Unit): ServiceConnection? {
+        if (status(context) != Status.READY) { onError("not-ready"); onReady(null); return null }
         val conn = object : ServiceConnection {
             override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
-                onReady(if (binder != null && binder.pingBinder()) ICallAudioService.Stub.asInterface(binder) else null)
+                val alive = binder != null && binder.pingBinder()
+                if (!alive) onError("binder-dead")
+                onReady(if (alive) ICallAudioService.Stub.asInterface(binder) else null)
             }
             override fun onServiceDisconnected(name: ComponentName?) = Unit
         }
         return runCatching { Shizuku.bindUserService(args(context), conn); conn }
-            .onFailure { onReady(null) }
+            .onFailure { onError("bind-${it.javaClass.simpleName}: ${it.message.orEmpty().take(120)}"); onReady(null) }
             .getOrNull()
     }
 
