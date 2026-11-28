@@ -32,7 +32,7 @@ object LiveSelfTest {
         if (!WhisperModels.isInstalled(context, model)) return Outcome.Failed("ยังไม่ได้ดาวน์โหลดโมเดล")
         if (!ShellAudio.isAvailable(context)) return Outcome.Failed("ยังไม่ได้จับคู่ (ทำข้อ \"จับคู่ในแอป\" ด้านบนก่อน)")
 
-        onPhase("กำลังเชื่อมต่อตัวดึงเสียง… (ยังไม่ต้องพูด)")
+        onPhase("กำลังเชื่อมต่อ… ครั้งแรกอาจใช้ 10–40 วินาที (ยังไม่ต้องพูด)")
         val opened = withContext(Dispatchers.IO) { ShellAudio.open(context, MediaRecorder.AudioSource.MIC, RATE) }
         val stream = when (opened) {
             is ShellAudio.Opened.Failed -> return Outcome.Failed(

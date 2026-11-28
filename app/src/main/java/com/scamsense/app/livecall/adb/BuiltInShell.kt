@@ -70,6 +70,19 @@ object BuiltInShell {
     /** Drops the in-memory connection (tests, or after the key files changed). */
     internal fun resetConnection() = synchronized(lock) { runCatching { manager?.close() }; manager = null }
 
+    /**
+     * The port shown on the Wireless debugging page ("IP address & Port", after ':').
+     * Saved so the next connection tries it first; used when automatic discovery is slow.
+     */
+    fun setConnectPort(context: Context, port: Int) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putInt(KEY_PORT, port).apply()
+        synchronized(lock) { runCatching { manager?.disconnect() } }
+        AdbLog.add("connect port set by user: $port")
+    }
+
+    fun savedConnectPort(context: Context): Int? =
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getInt(KEY_PORT, -1).takeIf { it > 0 }
+
     fun forget(context: Context) {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().clear().apply()
         synchronized(lock) { runCatching { manager?.close() }; manager = null }
@@ -180,7 +193,7 @@ object BuiltInShell {
 
         val cached = prefs.getInt(KEY_PORT, -1)
         if (cached > 0 && hosts.any { attempt(it, cached) }) return true
-        val mdns = mdnsPort(app, AdbMdns.SERVICE_TYPE_TLS_CONNECT, 3_000)
+        val mdns = mdnsPort(app, AdbMdns.SERVICE_TYPE_TLS_CONNECT, 6_000)
         AdbLog.add("connect: mDNS port = ${mdns ?: "not found"}")
         if (mdns != null && hosts.any { attempt(it, mdns) }) return true
         for (h in hosts) for (p in scanOpenPorts(h)) if (attempt(h, p)) return true
@@ -273,6 +286,7 @@ object BuiltInShell {
      */
     fun scanOpenPorts(host: String, from: Int = 30_000, to: Int = 65_535): List<Int> {
         val started = System.currentTimeMillis()
+        AdbLog.add("scan $host: ports $from-$to …")
         val pool = Executors.newFixedThreadPool(192)
         val open = java.util.concurrent.ConcurrentLinkedQueue<Int>()
         val addr = runCatching { InetAddress.getByName(host) }.getOrNull() ?: return emptyList()

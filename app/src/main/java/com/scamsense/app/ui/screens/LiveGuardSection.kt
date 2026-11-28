@@ -459,6 +459,32 @@ private fun BuiltInPairing(state: LiveGuardState, onRefresh: () -> Unit) {
         Check(Icons.Rounded.Link, "จับคู่ในแอปแล้ว", true,
             if (state.autoEnable) "ไม่ต้องใช้แอป Shizuku • เปิดการเชื่อมต่อให้เองเมื่อมีสาย แม้รีสตาร์ทเครื่อง"
             else "ไม่ต้องใช้แอป Shizuku • ต้องเปิด \"การแก้ไขข้อบกพร่องแบบไร้สาย\" ค้างไว้")
+        // Fallback when automatic discovery is slow on a phone: the Wireless debugging page
+        // shows "IP address & Port"; the number after ':' is the connect port.
+        var portText by remember { mutableStateOf(com.scamsense.app.livecall.adb.BuiltInShell.savedConnectPort(context)?.toString().orEmpty()) }
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            androidx.compose.material3.OutlinedTextField(
+                value = portText,
+                onValueChange = { v -> portText = v.filter { it.isDigit() }.take(5) },
+                label = { Text("พอร์ตเชื่อมต่อ (ถ้าเชื่อมต่อช้า)") },
+                singleLine = true,
+                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
+                shape = RoundedCornerShape(20.dp),
+                modifier = Modifier.weight(1f),
+            )
+            Spacer(Modifier.width(8.dp))
+            TextButton(
+                onClick = {
+                    portText.toIntOrNull()?.takeIf { it in 1024..65535 }?.let {
+                        com.scamsense.app.livecall.adb.BuiltInShell.setConnectPort(context, it)
+                        android.widget.Toast.makeText(context, "บันทึกพอร์ตแล้ว", android.widget.Toast.LENGTH_SHORT).show()
+                    }
+                },
+                modifier = Modifier.heightIn(min = 48.dp),
+            ) { Text("บันทึก", style = MaterialTheme.typography.labelLarge) }
+        }
+        Text("ดูได้ที่ การแก้ไขข้อบกพร่องแบบไร้สาย → \"ที่อยู่ IP และพอร์ต\" ตัวเลขหลังเครื่องหมาย :",
+            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             TextButton(onClick = { showLog = true }, modifier = Modifier.heightIn(min = 48.dp)) {
                 Text("ดูบันทึกการเชื่อมต่อ", style = MaterialTheme.typography.labelLarge)
