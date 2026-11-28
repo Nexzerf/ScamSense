@@ -111,7 +111,7 @@ fun ShieldOrb(modifier: Modifier = Modifier, size: Dp = 160.dp, glow: Color = Sk
         drawCircle(Brush.radialGradient(listOf(glow.copy(alpha = 0.35f), Color.Transparent), c, r), r, c)
         for (k in 1..2) drawCircle(Color.White.copy(alpha = 0.10f), r * (0.62f + 0.17f * k) * pulse, c, style = Stroke(1.dp.toPx()))
         val core = r * 0.62f * pulse
-        drawCircle(Brush.linearGradient(listOf(Sky.copy(alpha = 0.95f), Mint.copy(alpha = 0.85f), Lime.copy(alpha = 0.75f)),
+        drawCircle(Brush.linearGradient(listOf(Color(0xFF7FA6FF), Color(0xFF1F5EFF)),
             start = Offset(c.x - core, c.y - core), end = Offset(c.x + core, c.y + core)), core, c)
         drawCircle(Color.White.copy(alpha = 0.35f), core, c, style = Stroke(1.5.dp.toPx()))
 
@@ -234,13 +234,13 @@ fun ChoicePill(
 ) {
     val dark = MaterialTheme.colorScheme.background.luminanceCompat() < 0.3f
     val bg = when {
-        selected && dark -> Lime
-        selected -> com.scamsense.app.ui.theme.Navy900
+        selected && dark -> MaterialTheme.colorScheme.primary
+        selected -> MaterialTheme.colorScheme.primary
         else -> MaterialTheme.colorScheme.surface
     }
     val fg = when {
-        selected && dark -> com.scamsense.app.ui.theme.Navy900
-        selected -> Color.White
+        selected && dark -> MaterialTheme.colorScheme.onPrimary
+        selected -> MaterialTheme.colorScheme.onPrimary
         else -> MaterialTheme.colorScheme.onSurface
     }
     val interaction = androidx.compose.runtime.remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
@@ -272,16 +272,18 @@ private fun Color.luminanceCompat(): Float = this.luminance()
 
 /** Numbered step title: navy disc with the number, or a mint check when the step is done. */
 @Composable
-fun StepHeader(n: Int, title: String, done: Boolean = false, modifier: Modifier = Modifier) {
+fun StepHeader(n: Int, title: String, modifier: Modifier = Modifier, done: Boolean = false) {
+    val stepColor = MaterialTheme.colorScheme.primary
+    val doneColor = com.scamsense.app.ui.theme.riskColors(RiskLevel.SAFE).main
     androidx.compose.foundation.layout.Row(modifier.padding(top = 6.dp), verticalAlignment = Alignment.CenterVertically) {
         Box(
             Modifier.size(32.dp).clip(androidx.compose.foundation.shape.CircleShape)
-                .drawBehind { drawRect(if (done) Mint else com.scamsense.app.ui.theme.Navy900) },
+                .drawBehind { drawRect(if (done) doneColor else stepColor) },
             contentAlignment = Alignment.Center,
         ) {
             if (done) androidx.compose.material3.Icon(androidx.compose.material.icons.Icons.Rounded.Check, null,
-                tint = com.scamsense.app.ui.theme.Navy900, modifier = Modifier.size(20.dp))
-            else Text("$n", style = MaterialTheme.typography.labelLarge, color = Lime)
+                tint = Color.White, modifier = Modifier.size(20.dp))
+            else Text("$n", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onPrimary)
         }
         androidx.compose.foundation.layout.Spacer(Modifier.size(10.dp))
         Text(title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground,

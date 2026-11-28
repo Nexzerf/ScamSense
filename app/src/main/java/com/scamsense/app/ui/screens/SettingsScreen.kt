@@ -125,9 +125,9 @@ fun SettingsScreen(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     val initial = settings.caregiverName.trim().firstOrNull { it.isLetter() }?.toString() ?: "?"
                     Box(
-                        Modifier.size(56.dp).clip(CircleShape).glowBackdrop(),
+                        Modifier.size(52.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
                         contentAlignment = Alignment.Center,
-                    ) { Text(initial, style = MaterialTheme.typography.titleLarge, color = Color.White, fontWeight = FontWeight.Bold) }
+                    ) { Text(initial, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onPrimaryContainer, fontWeight = FontWeight.Bold) }
                     Spacer(Modifier.width(14.dp))
                     Column(Modifier.weight(1f)) {
                         Text(settings.caregiverName.ifBlank { "ผู้ดูแล" }, style = MaterialTheme.typography.titleMedium)
@@ -141,7 +141,7 @@ fun SettingsScreen(
                 }
                 Spacer(Modifier.size(10.dp))
                 Text(
-                    "เมื่อพบอันตราย กดปุ่มเดียวเพื่อส่งคำเตือนถึงคนนี้ (ผ่านแอป SMS คุณเห็นข้อความก่อนส่งเสมอ)",
+                    "ส่งคำเตือนถึงคนนี้ได้ในปุ่มเดียวเมื่อพบอันตราย",
                     style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             } else {
@@ -149,7 +149,7 @@ fun SettingsScreen(
                     IconChip(Icons.Rounded.FamilyRestroom, MaterialTheme.colorScheme.primary)
                     Spacer(Modifier.width(12.dp))
                     Text(
-                        "ใส่ชื่อและเบอร์ของคนที่ไว้ใจ เมื่อพบอันตรายจะส่งคำเตือนถึงเขาได้ทันที",
+                        "คนที่ไว้ใจ จะได้รับคำเตือนเมื่อพบอันตราย",
                         style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
@@ -192,11 +192,10 @@ fun SettingsScreen(
 
         // ---------------------------------------------------------------- call guard
         Group("ป้องกันสายโทร", index = 2) {
-            val c = riskColors(if (guardOn) RiskLevel.SAFE else RiskLevel.SUSPICIOUS)
             NavRow(
-                icon = Icons.Rounded.PhoneLocked, tint = c.main,
+                icon = Icons.Rounded.PhoneLocked, tint = MaterialTheme.colorScheme.primary,
                 title = if (guardOn) "เปิดอยู่" else "ยังไม่เปิด",
-                subtitle = "กรองสายเบอร์อันตราย และฟังระหว่างคุยเพื่อเตือนหรือวางสายให้",
+                subtitle = "กรองสาย และฟังระหว่างคุย",
                 onClick = onOpenCallGuard,
             )
         }
@@ -239,10 +238,10 @@ fun SettingsScreen(
         // ---------------------------------------------------------------- block words
         Group("คำที่ต้องการบล็อก", index = 5) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                IconChip(Icons.Rounded.Block, riskColors(RiskLevel.DANGEROUS).main)
+                IconChip(Icons.Rounded.Block, MaterialTheme.colorScheme.primary)
                 Spacer(Modifier.width(12.dp))
                 Text(
-                    "ถ้าข้อความมีคำเหล่านี้ จะเตือนว่าอันตรายทันที เหมาะให้ลูกหลานช่วยตั้ง",
+                    "เจอคำเหล่านี้ จะเตือนว่าอันตรายทันที",
                     style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -340,7 +339,7 @@ fun SettingsScreen(
         // ---------------------------------------------------------------- about
         Group("เกี่ยวกับ", index = 8) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                IconChip(Icons.Rounded.Info, MaterialTheme.colorScheme.secondary)
+                IconChip(Icons.Rounded.Info, MaterialTheme.colorScheme.primary)
                 Spacer(Modifier.width(12.dp))
                 Column {
                     Text("ScamSense เวอร์ชัน ${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.titleSmall)
@@ -364,13 +363,11 @@ fun SettingsScreen(
 @Composable
 private fun StatusHero(settings: AppSettings, guardOn: Boolean) {
     Row(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(32.dp)).glowBackdrop().padding(18.dp),
+        Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        ShieldOrb(size = 84.dp, pulse = com.scamsense.app.ui.components.breathing())
-        Spacer(Modifier.width(12.dp))
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text("การตั้งค่า", style = MaterialTheme.typography.headlineSmall, color = Color.White,
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text("ตั้งค่า", style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.onBackground,
                 modifier = Modifier.semantics { heading() })
             StatusLine(settings.hasCaregiver, if (settings.hasCaregiver) "ผู้ดูแล: ${settings.caregiverName.ifBlank { settings.caregiverPhone }}" else "ยังไม่ได้ตั้งผู้ดูแล")
             StatusLine(guardOn, if (guardOn) "ป้องกันสายโทร: เปิด" else "ป้องกันสายโทร: ยังไม่เปิด")
@@ -381,9 +378,9 @@ private fun StatusHero(settings: AppSettings, guardOn: Boolean) {
 @Composable
 private fun StatusLine(ok: Boolean, text: String) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.size(10.dp).clip(CircleShape).background(if (ok) Mint else Color(0xFFFFC651)))
+        Box(Modifier.size(9.dp).clip(CircleShape).background(riskColors(if (ok) RiskLevel.SAFE else RiskLevel.SUSPICIOUS).main))
         Spacer(Modifier.width(8.dp))
-        Text(text, style = MaterialTheme.typography.labelLarge, color = Color.White.copy(alpha = 0.9f), maxLines = 1)
+        Text(text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
     }
 }
 
@@ -414,7 +411,7 @@ private fun NavRow(icon: ImageVector, tint: Color, title: String, subtitle: Stri
         IconChip(icon, tint)
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
-            Text(title, style = MaterialTheme.typography.titleSmall, color = tint)
+            Text(title, style = MaterialTheme.typography.titleSmall)
             Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -432,13 +429,13 @@ private fun ChoiceTile(
 ) {
     val dark = MaterialTheme.colorScheme.background.luminance() < 0.3f
     val bg = when {
-        selected && dark -> Lime
-        selected -> Navy900
+        selected && dark -> MaterialTheme.colorScheme.primary
+        selected -> MaterialTheme.colorScheme.primary
         else -> MaterialTheme.colorScheme.surfaceVariant
     }
     val fg = when {
-        selected && dark -> Navy900
-        selected -> Color.White
+        selected && dark -> MaterialTheme.colorScheme.onPrimary
+        selected -> MaterialTheme.colorScheme.onPrimary
         else -> MaterialTheme.colorScheme.onSurface
     }
     Surface(

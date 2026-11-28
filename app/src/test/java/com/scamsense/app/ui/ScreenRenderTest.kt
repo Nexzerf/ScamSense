@@ -91,7 +91,7 @@ class ScreenRenderTest {
         shoot("02_home") {
             HomeScreen(caregiver, history, { _, _ -> }, {}, {}, {}, {})
         }
-        compose.onNodeWithText("กดแล้วพูดได้เลย").assertIsDisplayed()
+        compose.onNodeWithText("แตะแล้วพูด").assertIsDisplayed()
     }
 
     @Test fun homeNoCaregiverDark() = shoot("02b_home_dark", dark = true) {

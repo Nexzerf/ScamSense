@@ -25,6 +25,8 @@
     <!-- Live in-call listening (opt-in, Android 11+, requires Shizuku):
          READ_PHONE_STATE only to know when a call is answered / ended (no call log, no numbers). -->
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <!-- Granted over ADB in built-in mode: lets ScamSense hang up a confirmed scam call. -->
+    <uses-permission android:name="android.permission.ANSWER_PHONE_CALLS" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.VIBRATE" />

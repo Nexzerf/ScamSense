@@ -171,8 +171,7 @@ fun CheckScreen(
                         .padding(horizontal = 20.dp, vertical = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
-                    Text(copy.hint, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(top = 8.dp).enterUp(0))
+                    Spacer(Modifier.size(4.dp))
 
                     OutlinedTextField(
                         value = text,

@@ -2,6 +2,7 @@ package com.scamsense.app.ui.screens
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -101,6 +102,10 @@ fun HistoryScreen(
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        item {
+            Text("ประวัติ", style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.padding(top = 4.dp, bottom = 4.dp).semantics { heading() })
+        }
         item { Box(Modifier.enterUp(0)) { SummaryHero(items) } }
         item {
             // Wraps instead of scrolling sideways: every filter is visible at once.
@@ -113,7 +118,7 @@ fun HistoryScreen(
                 listOf(RiskLevel.DANGEROUS, RiskLevel.SUSPICIOUS, RiskLevel.SAFE).forEach { level ->
                     val n = items.count { it.level == level }
                     if (n > 0) ChoicePill("${level.label()} $n", active == level, { filter = if (active == level) null else level },
-                        leading = { Box(Modifier.size(10.dp).clip(CircleShape).background(riskHero(level).accent)) })
+                        leading = { Box(Modifier.size(10.dp).clip(CircleShape).background(riskColors(level).main)) })
                 }
             }
         }
@@ -165,28 +170,29 @@ private fun SummaryHero(items: List<RiskResult>) {
     val susp = items.count { it.level == RiskLevel.SUSPICIOUS }
     val safe = items.size - danger - susp
     Column(
-        Modifier.fillMaxWidth().clip(RoundedCornerShape(32.dp)).glowBackdrop().padding(22.dp)
+        Modifier.fillMaxWidth().clip(RoundedCornerShape(28.dp)).background(MaterialTheme.colorScheme.surface)
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(28.dp)).padding(20.dp)
             .semantics(mergeDescendants = true) {
                 contentDescription = "ตรวจแล้ว ${items.size} ครั้ง อันตราย $danger น่าสงสัย $susp ปลอดภัย $safe"
             },
     ) {
-        Text("ประวัติการตรวจ", style = MaterialTheme.typography.titleMedium, color = Color.White.copy(alpha = 0.8f))
+        Text("ตรวจไปแล้ว", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Row(verticalAlignment = Alignment.Bottom) {
-            Text(com.scamsense.app.ui.components.countUp(items.size).toString(), style = MaterialTheme.typography.displayMedium, color = Color.White, fontWeight = FontWeight.Bold)
+            Text(com.scamsense.app.ui.components.countUp(items.size).toString(), style = MaterialTheme.typography.displayMedium, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
             Spacer(Modifier.width(8.dp))
-            Text("ครั้ง", style = MaterialTheme.typography.titleLarge, color = Color.White, modifier = Modifier.padding(bottom = 8.dp))
+            Text("ครั้ง", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface, modifier = Modifier.padding(bottom = 8.dp))
         }
         Spacer(Modifier.size(12.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            StatPill("อันตราย", danger, riskHero(RiskLevel.DANGEROUS).accent, Modifier.weight(1f))
-            StatPill("น่าสงสัย", susp, riskHero(RiskLevel.SUSPICIOUS).accent, Modifier.weight(1f))
-            StatPill("ปลอดภัย", safe, riskHero(RiskLevel.SAFE).accent, Modifier.weight(1f))
+            StatPill("อันตราย", danger, riskColors(RiskLevel.DANGEROUS).main, Modifier.weight(1f))
+            StatPill("น่าสงสัย", susp, riskColors(RiskLevel.SUSPICIOUS).main, Modifier.weight(1f))
+            StatPill("ปลอดภัย", safe, riskColors(RiskLevel.SAFE).main, Modifier.weight(1f))
         }
         Spacer(Modifier.size(12.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Rounded.Lock, null, tint = Color.White.copy(alpha = 0.7f), modifier = Modifier.size(16.dp))
+            Icon(Icons.Rounded.Lock, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
             Spacer(Modifier.width(6.dp))
-            Text("เก็บแบบเข้ารหัส อยู่ในเครื่องนี้เท่านั้น", style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.75f))
+            Text("เข้ารหัส เก็บในเครื่องนี้เท่านั้น", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -194,14 +200,14 @@ private fun SummaryHero(items: List<RiskResult>) {
 @Composable
 private fun StatPill(label: String, value: Int, accent: Color, modifier: Modifier) {
     Column(
-        modifier.clip(RoundedCornerShape(20.dp)).background(Color.White.copy(alpha = 0.09f)).padding(vertical = 10.dp, horizontal = 12.dp),
+        modifier.clip(RoundedCornerShape(18.dp)).background(MaterialTheme.colorScheme.surfaceVariant).padding(vertical = 10.dp, horizontal = 12.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(9.dp).clip(CircleShape).background(accent))
             Spacer(Modifier.width(6.dp))
-            Text(label, style = MaterialTheme.typography.labelMedium, color = Color.White.copy(alpha = 0.85f), maxLines = 1)
+            Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
         }
-        Text(com.scamsense.app.ui.components.countUp(value).toString(), style = MaterialTheme.typography.headlineSmall, color = Color.White, fontWeight = FontWeight.Bold)
+        Text(com.scamsense.app.ui.components.countUp(value).toString(), style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.onSurface, fontWeight = FontWeight.Bold)
     }
 }
 

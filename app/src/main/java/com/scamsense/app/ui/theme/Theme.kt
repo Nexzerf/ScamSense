@@ -17,7 +17,7 @@ import com.scamsense.app.data.ThemeMode
 private val LightColors = lightColorScheme(
     primary = Brand,
     onPrimary = Color.White,
-    primaryContainer = Color(0xFFDDE6FF),
+    primaryContainer = Color(0xFFE6EEFF),
     onPrimaryContainer = Color(0xFF0A1F66),
     secondary = Color(0xFF0E7490),
     onSecondary = Color.White,
@@ -27,14 +27,14 @@ private val LightColors = lightColorScheme(
     onBackground = InkLight,
     surface = SurfaceLight,
     onSurface = InkLight,
-    surfaceVariant = Color(0xFFE8EFFB),
+    surfaceVariant = Color(0xFFF1F3F6),
     onSurfaceVariant = InkMutedLight,
     surfaceContainerLowest = Color.White,
     surfaceContainerLow = Color(0xFFF7FAFF),
     surfaceContainer = Color(0xFFF0F5FD),
     surfaceContainerHigh = Color(0xFFE7EEFA),
     outline = OutlineLight,
-    outlineVariant = Color(0xFFE2E9F6),
+    outlineVariant = Color(0xFFECEEF2),
     error = Color(0xFFC81E1E),
 )
 

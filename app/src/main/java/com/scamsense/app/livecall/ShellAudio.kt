@@ -101,16 +101,62 @@ object ShellAudio {
         return Opened.Failed(header?.removePrefix("ERR ")?.trim()?.ifBlank { null } ?: "timeout")
     }
 
-    /** Ends the ongoing call (KEYCODE_ENDCALL from the shell). Blocking. */
+    /**
+     * Ends the ongoing call. Success is judged by the real call state (not by a command's
+     * output), trying in order: the END CALL key, TelecomManager.endCall (permission granted
+     * over ADB), then the headset button, which hangs up an active call on most phones.
+     * Blocking (a few seconds).
+     */
     fun endCall(context: Context): Boolean {
-        if (com.scamsense.app.livecall.adb.BuiltInShell.isPaired(context)) {
-            val out = com.scamsense.app.livecall.adb.BuiltInShell.runShell(context, "input keyevent KEYCODE_ENDCALL; echo ok")
-            if (out?.contains("ok") == true) return true
+        val log = com.scamsense.app.livecall.adb.AdbLog
+        if (!inCall(context)) { log.add("end call: no active call"); return true }
+        val builtIn = com.scamsense.app.livecall.adb.BuiltInShell.isPaired(context)
+        fun shell(cmd: String) {
+            if (builtIn) com.scamsense.app.livecall.adb.BuiltInShell.runShell(context, cmd, 5_000)
+            else runCatching { start(arrayOf("sh", "-c", cmd))?.waitFor() }
         }
-        return runCatching {
-            val p = start(arrayOf("input", "keyevent", "KEYCODE_ENDCALL")) ?: return false
-            p.waitFor() == 0
-        }.getOrDefault(false)
+        val steps = listOf<Pair<String, () -> Unit>>(
+            "keyevent ENDCALL" to { shell("input keyevent KEYCODE_ENDCALL") },
+            "TelecomManager.endCall" to { telecomEndCall(context) },
+            "keyevent HEADSETHOOK" to { shell("input keyevent KEYCODE_HEADSETHOOK") },
+        )
+        for ((name, step) in steps) {
+            runCatching { step() }.onFailure { log.add("end call: $name threw ${it.javaClass.simpleName}") }
+            val ended = waitUntilIdle(context, 2_000)
+            log.add("end call: $name -> ${if (ended) "ended" else "still in call"}")
+            if (ended) return true
+        }
+        return false
+    }
+
+    @Suppress("DEPRECATION")
+    private fun telecomEndCall(context: Context) {
+        if (android.os.Build.VERSION.SDK_INT < 28) return
+        if (androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.ANSWER_PHONE_CALLS)
+            != android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) {
+            if (com.scamsense.app.livecall.adb.BuiltInShell.isPaired(context)) com.scamsense.app.livecall.adb.BuiltInShell.grantAnswerCalls(context)
+        }
+        if (androidx.core.content.ContextCompat.checkSelfPermission(context, android.Manifest.permission.ANSWER_PHONE_CALLS)
+            == android.content.pm.PackageManager.PERMISSION_GRANTED
+        ) {
+            val ok = context.getSystemService(android.telecom.TelecomManager::class.java)?.endCall()
+            com.scamsense.app.livecall.adb.AdbLog.add("end call: TelecomManager.endCall returned $ok")
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun inCall(context: Context): Boolean = runCatching {
+        context.getSystemService(android.telephony.TelephonyManager::class.java)?.callState != android.telephony.TelephonyManager.CALL_STATE_IDLE
+    }.getOrDefault(true)
+
+    private fun waitUntilIdle(context: Context, ms: Long): Boolean {
+        val end = System.currentTimeMillis() + ms
+        while (System.currentTimeMillis() < end) {
+            if (!inCall(context)) return true
+            Thread.sleep(200)
+        }
+        return !inCall(context)
     }
 
     /**

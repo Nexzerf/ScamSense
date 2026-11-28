@@ -9,6 +9,7 @@ import android.os.Build
 import android.provider.Settings
 import android.util.Log
 import androidx.core.content.ContextCompat
+import androidx.core.content.edit
 import io.github.muntashirakon.adb.AbsAdbConnectionManager
 import io.github.muntashirakon.adb.AdbStream
 import io.github.muntashirakon.adb.android.AdbMdns
@@ -75,7 +76,7 @@ object BuiltInShell {
      * Saved so the next connection tries it first; used when automatic discovery is slow.
      */
     fun setConnectPort(context: Context, port: Int) {
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putInt(KEY_PORT, port).apply()
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit { putInt(KEY_PORT, port) }
         synchronized(lock) { runCatching { manager?.disconnect() } }
         AdbLog.add("connect port set by user: $port")
     }
@@ -84,7 +85,7 @@ object BuiltInShell {
         context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).getInt(KEY_PORT, -1).takeIf { it > 0 }
 
     fun forget(context: Context) {
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().clear().apply()
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit { clear() }
         synchronized(lock) { runCatching { manager?.close() }; manager = null }
         AdbLog.add("forgot pairing")
     }
@@ -135,7 +136,7 @@ object BuiltInShell {
             AdbLog.add("pair: $host:$port -> ${ok ?: "failed"}")
             if (ok != true && lastError?.contains("SSLHandshake") == true) {
                 // A TLS port that is not the pairing server is very likely adbd's connect port.
-                prefs.edit().putInt(KEY_PORT, port).apply()
+                prefs.edit { putInt(KEY_PORT, port) }
             }
             return ok == true
         }
@@ -155,13 +156,14 @@ object BuiltInShell {
             return fail("pair-port", "ไม่พบหน้าต่างจับคู่ ให้เปิด \"จับคู่อุปกรณ์ด้วยรหัสจับคู่\" ค้างไว้ แล้วใส่รหัสพร้อมเลขพอร์ต")
         }
         if (!paired) return fail("pair", "จับคู่ไม่สำเร็จ ลองใส่รหัสพร้อมเลขพอร์ตจากหน้าต่างจับคู่ เช่น 123456 41235 (รหัสเปลี่ยนทุกครั้งที่เปิดหน้าต่าง)")
-        app.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(KEY_PAIRED, true).apply()
+        app.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit { putBoolean(KEY_PAIRED, true) }
 
         // Pairing dialog closes after success; give adbd a moment before connecting.
         Thread.sleep(800)
         if (!connect(app)) return fail("connect-after-pair", "จับคู่แล้ว แต่เชื่อมต่อไม่สำเร็จ ลองกด \"ทดสอบการฟัง\" อีกครั้ง")
         val grant = runShell(app, "pm grant ${app.packageName} ${Manifest.permission.WRITE_SECURE_SETTINGS}")
         AdbLog.add("grant WRITE_SECURE_SETTINGS: '${grant?.trim().orEmpty()}' -> ${canToggleWirelessDebugging(app)}")
+        grantAnswerCalls(app)
         AdbLog.add("whoami: ${runShell(app, "id")?.trim()}")
         return Result.Ok
     }
@@ -186,7 +188,7 @@ object BuiltInShell {
                 mgr.isConnected
             }
             AdbLog.add("connect: $host:$port -> ${ok ?: "timeout"}")
-            if (ok == true) prefs.edit().putInt(KEY_PORT, port).apply()
+            if (ok == true) prefs.edit { putInt(KEY_PORT, port) }
             else runCatching { mgr.disconnect() }
             return ok == true
         }
@@ -215,8 +217,27 @@ object BuiltInShell {
     fun runShell(context: Context, command: String, timeoutMs: Long = 8_000): String? {
         val stream = exec(context, command) ?: return null
         return withTimeout(timeoutMs) {
-            stream.use { s -> s.openInputStream().bufferedReader().readText() }
+            stream.use { s ->
+                // libadb ends a finished command with IOException("Stream closed.") rather than
+                // -1, so collect what arrived and treat that exception as end of output.
+                val input = s.openInputStream()
+                val out = java.io.ByteArrayOutputStream()
+                val buf = ByteArray(4096)
+                try {
+                    while (true) { val n = input.read(buf); if (n < 0) break; out.write(buf, 0, n) }
+                } catch (_: java.io.IOException) { }
+                out.toString(Charsets.UTF_8.name())
+            }
         }
+    }
+
+    /** Runtime permission that lets ScamSense end a call through TelecomManager; granted over ADB. */
+    fun grantAnswerCalls(context: Context) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
+        if (ContextCompat.checkSelfPermission(context, Manifest.permission.ANSWER_PHONE_CALLS) == PackageManager.PERMISSION_GRANTED) return
+        val out = runShell(context, "pm grant ${context.packageName} ${Manifest.permission.ANSWER_PHONE_CALLS}")
+        AdbLog.add("grant ANSWER_PHONE_CALLS: '${out?.trim().orEmpty()}' -> " +
+            "${ContextCompat.checkSelfPermission(context, Manifest.permission.ANSWER_PHONE_CALLS) == PackageManager.PERMISSION_GRANTED}")
     }
 
     // ------------------------------------------------------------------ wireless debugging

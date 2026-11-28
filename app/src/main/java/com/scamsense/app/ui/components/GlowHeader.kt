@@ -33,54 +33,42 @@ import androidx.compose.ui.unit.dp
 import com.scamsense.app.ui.theme.Lime
 
 /**
- * Header for every sub-screen: navy glow panel with rounded bottom, a frosted back button,
- * the title, and a one-line explanation with an icon. Gives all screens one consistent frame.
+ * Header for every sub-screen: a calm app bar on the page colour with a round back button
+ * and the title. (subtitle/icon are accepted for call-site compatibility but not shown:
+ * fewer words and colours on screen.)
  */
 @Composable
 fun GlowHeader(
     title: String,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
-    subtitle: String? = null,
-    icon: ImageVector? = null,
+    @Suppress("UNUSED_PARAMETER") subtitle: String? = null,
+    @Suppress("UNUSED_PARAMETER") icon: ImageVector? = null,
     actions: @Composable RowScope.() -> Unit = {},
 ) {
-    Column(
+    // Calm app bar: page colour, round back button, title. Colour is kept for content.
+    Row(
         modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
-            .glowBackdrop()
+            .background(MaterialTheme.colorScheme.background)
             .statusBarsPadding()
-            .padding(start = 12.dp, end = 12.dp, top = 6.dp, bottom = 20.dp),
+            .padding(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            GlassIconButton(Icons.AutoMirrored.Rounded.ArrowBack, "ย้อนกลับ", onBack)
-            Spacer(Modifier.width(12.dp))
-            Text(
-                title,
-                style = MaterialTheme.typography.titleLarge,
-                color = Color.White,
-                modifier = Modifier.weight(1f).semantics { heading() },
-                maxLines = 1,
-            )
-            actions()
-        }
-        if (subtitle != null) {
-            Row(Modifier.padding(start = 8.dp, top = 14.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                if (icon != null) {
-                    Box(
-                        Modifier.size(40.dp).clip(RoundedCornerShape(14.dp)).background(Color.White.copy(alpha = 0.12f)),
-                        contentAlignment = Alignment.Center,
-                    ) { Icon(icon, null, tint = Lime, modifier = Modifier.size(22.dp)) }
-                    Spacer(Modifier.width(12.dp))
-                }
-                Text(subtitle, style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.85f))
-            }
-        }
+        GlassIconButton(Icons.AutoMirrored.Rounded.ArrowBack, "ย้อนกลับ", onBack)
+        Spacer(Modifier.width(12.dp))
+        Text(
+            title,
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.weight(1f).semantics { heading() },
+            maxLines = 1,
+        )
+        actions()
     }
 }
 
-/** 48 dp round frosted icon button for use on navy panels. */
+/** 48 dp round icon button on the page background. */
 @Composable
 fun GlassIconButton(icon: ImageVector, description: String, onClick: () -> Unit) {
     val interaction = remember { MutableInteractionSource() }
@@ -91,8 +79,8 @@ fun GlassIconButton(icon: ImageVector, description: String, onClick: () -> Unit)
             .size(48.dp)
             .pressScale(interaction, 0.9f)
             .clip(CircleShape)
-            .background(Color.White.copy(alpha = 0.12f)),
+            .background(MaterialTheme.colorScheme.surface),
     ) {
-        Icon(icon, contentDescription = description, tint = Color.White)
+        Icon(icon, contentDescription = description, tint = MaterialTheme.colorScheme.onSurface)
     }
 }

@@ -17,15 +17,15 @@ val Sky = Color(0xFF9CC8FF)
 val Mint = Color(0xFF72E6C9)
 val Lime = Color(0xFFD5FF4D)
 
-val Brand = Color(0xFF2D5BF0)
+val Brand = Color(0xFF1F5EFF)
 val BrandDeep = Navy900
 val BrandLight = Color(0xFF9DB6FF)
 
 val InkLight = Color(0xFF0B1530)
-val InkMutedLight = Color(0xFF4A5876)
+val InkMutedLight = Color(0xFF5B6475)
 val SurfaceLight = Color(0xFFFFFFFF)
-val BackgroundLight = Color(0xFFEEF3FC)
-val OutlineLight = Color(0xFFD3DCEE)
+val BackgroundLight = Color(0xFFF4F5F7)
+val OutlineLight = Color(0xFFD6DAE1)
 
 val InkDark = Color(0xFFE9EEF9)
 val InkMutedDark = Color(0xFFA9B5CF)

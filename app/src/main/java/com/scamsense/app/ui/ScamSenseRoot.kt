@@ -34,6 +34,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.animation.animateContentSize
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
@@ -164,22 +167,6 @@ private fun AppNavigation(vm: MainViewModel, nav: NavHostController = rememberNa
     val isTab = tabs.any { it.route == route }
 
     Scaffold(
-        topBar = {
-            if (isTab) {
-                CenterAlignedTopAppBar(
-                    title = {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(Modifier.size(38.dp).clip(CircleShape).glowBackdrop(), contentAlignment = Alignment.Center) {
-                                com.scamsense.app.ui.components.ShieldOrb(size = 36.dp)
-                            }
-                            Spacer(Modifier.width(10.dp))
-                            Text("ScamSense", style = MaterialTheme.typography.titleLarge)
-                        }
-                    },
-                    colors = TopAppBarDefaults.centerAlignedTopAppBarColors(containerColor = MaterialTheme.colorScheme.background),
-                )
-            }
-        },
         bottomBar = {
             if (isTab) {
                 FloatingTabBar(
@@ -222,6 +209,14 @@ private fun AppNavigation(vm: MainViewModel, nav: NavHostController = rememberNa
                     onCallCaregiver = { if (!Intents.dial(context, settings.caregiverPhone)) toast("ไม่พบแอปโทรศัพท์") },
                     onOpenSettings = { nav.navigate(Routes.SETTINGS) { launchSingleTop = true } },
                     onOpenCallGuard = { nav.navigate(Routes.CALL_GUARD) },
+                    onOpenHistory = {
+                        nav.navigate(Routes.HISTORY) {
+                            popUpTo(nav.graph.findStartDestination().id) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+                    onOpenResult = { vm.openHistoryItem(it) },
                 )
             }
             composable(Routes.HISTORY) {
@@ -324,7 +319,6 @@ private fun FloatingTabBar(
     selected: String?,
     onSelect: (String) -> Unit,
 ) {
-    val dark = MaterialTheme.colorScheme.background.luminance() < 0.3f
     Box(
         Modifier
             .fillMaxWidth()
@@ -342,35 +336,29 @@ private fun FloatingTabBar(
                 tabs.forEach { (r, label, icon) ->
                     val on = r == selected
                     val bg by androidx.compose.animation.animateColorAsState(
-                        if (on) (if (dark) com.scamsense.app.ui.theme.Lime else com.scamsense.app.ui.theme.Navy900) else Color.Transparent,
-                        tween(260), label = "tabBg",
+                        if (on) MaterialTheme.colorScheme.primaryContainer else Color.Transparent, tween(240), label = "tabBg",
                     )
                     val fg by androidx.compose.animation.animateColorAsState(
-                        when {
-                            on && dark -> com.scamsense.app.ui.theme.Navy900
-                            on -> Color.White
-                            else -> MaterialTheme.colorScheme.onSurfaceVariant
-                        },
-                        tween(260), label = "tabFg",
+                        if (on) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant, tween(240), label = "tabFg",
                     )
-                    // Selected icon pops slightly (spring overshoot).
-                    val iconScale by androidx.compose.animation.core.animateFloatAsState(
-                        if (on) 1.12f else 1f, androidx.compose.animation.core.spring(dampingRatio = 0.45f, stiffness = 500f), label = "tabIcon",
-                    )
-                    Column(
+                    // Selected: blue pill with icon + label. Others: icon only (label read by TalkBack).
+                    Row(
                         Modifier
-                            .weight(1f)
+                            .weight(if (on) 1.6f else 1f)
                             .clip(RoundedCornerShape(30.dp))
                             .background(bg)
                             .selectable(selected = on, role = androidx.compose.ui.semantics.Role.Tab, onClick = { onSelect(r) })
-                            .heightIn(min = 60.dp)
-                            .padding(vertical = 6.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center,
+                            .semantics { contentDescription = label }
+                            .heightIn(min = 56.dp)
+                            .animateContentSize(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Icon(icon, contentDescription = null, tint = fg,
-                            modifier = Modifier.size(26.dp).graphicsLayer { scaleX = iconScale; scaleY = iconScale })
-                        Text(label, style = MaterialTheme.typography.labelMedium, color = fg, maxLines = 1)
+                        Icon(icon, contentDescription = null, tint = fg, modifier = Modifier.size(24.dp))
+                        if (on) {
+                            Spacer(Modifier.width(8.dp))
+                            Text(label, style = MaterialTheme.typography.labelLarge, color = fg, maxLines = 1)
+                        }
                     }
                 }
             }

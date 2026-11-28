@@ -17,6 +17,13 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.foundation.layout.fillMaxSize
+import com.scamsense.app.ui.theme.label
+import com.scamsense.app.ui.components.pressScale
+import androidx.compose.ui.draw.scale
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
 import androidx.compose.material.icons.rounded.Call
 import androidx.compose.material.icons.rounded.Edit
@@ -62,14 +69,6 @@ import com.scamsense.app.ui.theme.Navy900
 import com.scamsense.app.ui.theme.riskColors
 import java.util.Calendar
 
-private val tips = listOf(
-    "ธนาคารจะไม่ส่งลิงก์ให้กรอกรหัส OTP หรือรหัสผ่าน ทาง SMS หรือไลน์",
-    "ตำรวจจริงไม่โทรมาให้โอนเงินเพื่อ \"ตรวจสอบ\" ถ้ามีคนพูดแบบนี้ ให้วางสายทันที",
-    "ลูกหลานโทรมาจากเบอร์ใหม่ขอยืมเงิน? โทรกลับเบอร์เดิมที่คุณรู้จักก่อนเสมอ",
-    "อย่าติดตั้งแอปจากลิงก์ที่ส่งมาทางข้อความ ให้ติดตั้งจาก Play Store เท่านั้น",
-    "การลงทุนที่ \"การันตีกำไรทุกวัน\" ไม่มีอยู่จริง",
-    "ถ้าถูกเร่งให้รีบ ยิ่งต้องหยุดคิด และถามคนที่ไว้ใจก่อน",
-)
 
 @Composable
 fun HomeScreen(
@@ -82,218 +81,199 @@ fun HomeScreen(
     onOpenSettings: () -> Unit,
     modifier: Modifier = Modifier,
     onOpenCallGuard: () -> Unit = {},
+    onOpenHistory: () -> Unit = {},
+    onOpenResult: (RiskResult) -> Unit = {},
 ) {
-    val greeting = remember {
-        when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) {
-            in 5..11 -> "สวัสดีตอนเช้า"
-            in 12..16 -> "สวัสดีตอนบ่าย"
-            in 17..20 -> "สวัสดีตอนเย็น"
-            else -> "สวัสดี"
-        }
-    }
-    val tip = remember { tips[(System.currentTimeMillis() / 86_400_000L % tips.size).toInt()] }
-    val dangerCount = remember(history) { history.count { it.level == RiskLevel.DANGEROUS } }
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val screening = remember { isCallScreeningEnabled(context) }
 
     Column(
         modifier
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp)
             .padding(bottom = 24.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Spacer(Modifier.height(4.dp))
-        Column(Modifier.enterUp(0)) {
-            Text(greeting, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(
-                "วันนี้มีอะไรน่าสงสัยไหม?",
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.semantics { heading() },
-            )
+        // Page title + one quiet action, like the other tabs.
+        Row(Modifier.padding(top = 12.dp).enterUp(0), verticalAlignment = Alignment.CenterVertically) {
+            Text("ScamSense", style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.weight(1f).semantics { heading() })
+            com.scamsense.app.ui.components.GlassIconButton(Icons.Rounded.Settings, "ตั้งค่า", onOpenSettings)
         }
 
         Box(Modifier.enterUp(1)) {
-            HeroCard(onSpeak = { onCheck(CheckType.MESSAGE, true) }, onType = { onCheck(CheckType.MESSAGE, false) })
+            SpeakDial(onSpeak = { onCheck(CheckType.MESSAGE, true) }, onType = { onCheck(CheckType.MESSAGE, false) })
         }
 
-        SectionTitle("เลือกสิ่งที่ต้องการตรวจ", Modifier.enterUp(2))
-        Row(horizontalArrangement = Arrangement.spacedBy(14.dp), modifier = Modifier.enterUp(3)) {
-            ActionTile("ข้อความ", "SMS, LINE, แชท", Icons.Rounded.Sms, Color(0xFF2563EB),
-                { onCheck(CheckType.MESSAGE, false) }, Modifier.weight(1f))
-            ActionTile("ลิงก์", "เว็บที่ถูกส่งมา", Icons.Rounded.Link, Color(0xFF7C3AED),
-                { onCheck(CheckType.LINK, false) }, Modifier.weight(1f))
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(14.dp), modifier = Modifier.enterUp(4)) {
-            ActionTile("เบอร์โทร", "เบอร์ที่โทรเข้ามา", Icons.Rounded.PhoneInTalk, Color(0xFF0E7490),
-                { onCheck(CheckType.PHONE, false) }, Modifier.weight(1f))
-            ActionTile("การโอนเงิน", "ก่อนกดโอน ตรวจก่อน", Icons.Rounded.Payments, Color(0xFFB45309),
-                onTransaction, Modifier.weight(1f))
-        }
-
-        Box(Modifier.enterUp(5)) { CallGuardCard(settings, onOpenCallGuard) }
-
-        Box(Modifier.enterUp(6)) { CaregiverCard(settings, onCallCaregiver, onOpenSettings) }
-
-        Box(Modifier.enterUp(7)) { HotlineCard(onCallHotline) }
-
-        Card(
-            modifier = Modifier.enterUp(8),
-            shape = RoundedCornerShape(28.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
-        ) {
-            Row(Modifier.padding(18.dp), verticalAlignment = Alignment.Top) {
-                Icon(Icons.Rounded.Lightbulb, null, tint = MaterialTheme.colorScheme.onSecondaryContainer, modifier = Modifier.size(28.dp))
-                Spacer(Modifier.width(12.dp))
-                Column {
-                    Text("รู้ทันกลโกงวันนี้", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSecondaryContainer)
-                    Text(tip, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSecondaryContainer)
-                }
-            }
+        Text("ตรวจอย่างอื่น", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 4.dp).enterUp(2))
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.enterUp(2)) {
+            HomeRow(Icons.Rounded.Link, "ลิงก์", "เว็บที่ถูกส่งมา") { onCheck(CheckType.LINK, false) }
+            HomeRow(Icons.Rounded.PhoneInTalk, "เบอร์โทร", "เบอร์ที่โทรเข้ามา") { onCheck(CheckType.PHONE, false) }
+            HomeRow(Icons.Rounded.Payments, "ก่อนโอนเงิน", "ตอบ 3 ข้อ รู้ทันที", onClick = onTransaction)
         }
 
         if (history.isNotEmpty()) {
-            val danger = riskColors(RiskLevel.DANGEROUS)
-            Text(
-                "ตรวจไปแล้ว ${history.size} ครั้ง • พบอันตราย $dangerCount ครั้ง",
-                style = MaterialTheme.typography.bodyMedium,
-                color = if (dangerCount > 0) danger.main else MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Row(Modifier.padding(top = 4.dp).enterUp(3), verticalAlignment = Alignment.CenterVertically) {
+                Text("ล่าสุด", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                androidx.compose.material3.TextButton(onClick = onOpenHistory) {
+                    Text("ดูทั้งหมด", style = MaterialTheme.typography.labelLarge)
+                }
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.enterUp(3)) {
+                history.take(3).forEach { r -> RecentRow(r) { onOpenResult(r) } }
+            }
+        }
+
+        Text("การป้องกัน", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 4.dp).enterUp(4))
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp), modifier = Modifier.enterUp(4)) {
+            HomeRow(Icons.Rounded.PhoneLocked, "ป้องกันสายโทร", if (screening) "เปิดอยู่" else "ยังไม่เปิด",
+                badge = if (screening) RiskLevel.SAFE else RiskLevel.SUSPICIOUS, onClick = onOpenCallGuard)
+            HomeRow(Icons.Rounded.FamilyRestroom, if (settings.hasCaregiver) settings.caregiverName.ifBlank { "ผู้ดูแล" } else "เพิ่มผู้ดูแล",
+                if (settings.hasCaregiver) "แตะเพื่อโทร" else "รับคำเตือนเมื่อพบอันตราย",
+                onClick = if (settings.hasCaregiver) onCallCaregiver else onOpenSettings)
+            HomeRow(Icons.Rounded.SupportAgent, "สายด่วน 1441", "โดนหลอกหรือไม่แน่ใจ โทรได้ 24 ชม.", onClick = onCallHotline)
         }
     }
 }
 
+/** Round "tap to speak" dial: the one big action, in the brand blue on white. */
 @Composable
-private fun HeroCard(onSpeak: () -> Unit, onType: () -> Unit) {
-    Box(
-        Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(32.dp))
-            .glowBackdrop(),
+private fun SpeakDial(onSpeak: () -> Unit, onType: () -> Unit) {
+    val primary = MaterialTheme.colorScheme.primary
+    val track = MaterialTheme.colorScheme.surfaceVariant
+    val tick = MaterialTheme.colorScheme.outline
+    val pulse = com.scamsense.app.ui.components.breathing()
+    Card(
+        shape = RoundedCornerShape(28.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
-        Column(Modifier.padding(22.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                ShieldOrb(size = 92.dp, pulse = com.scamsense.app.ui.components.breathing())
-                Spacer(Modifier.width(12.dp))
-                Column(Modifier.weight(1f)) {
-                    Text("ตรวจก่อนเชื่อ", style = MaterialTheme.typography.headlineMedium, color = Color.White)
-                    Text(
-                        "พูด พิมพ์ หรือวางข้อความที่ได้รับ ScamSense บอกได้ทันทีว่าน่าไว้ใจไหม",
-                        style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.82f),
-                    )
+        Column(Modifier.fillMaxWidth().padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Box(Modifier.size(220.dp), contentAlignment = Alignment.Center) {
+                androidx.compose.foundation.Canvas(Modifier.fillMaxSize()) {
+                    val r = size.minDimension / 2
+                    val c = center
+                    // tick marks around a 260° dial
+                    for (k in 0..52) {
+                        val a = Math.toRadians((140.0 + 260.0 * k / 52))
+                        val long = k % 13 == 0
+                        val r1 = r - 2.dp.toPx()
+                        val r2 = r1 - (if (long) 12.dp.toPx() else 6.dp.toPx())
+                        drawLine(tick.copy(alpha = if (long) 0.8f else 0.4f),
+                            androidx.compose.ui.geometry.Offset(c.x + (r1 * kotlin.math.cos(a)).toFloat(), c.y + (r1 * kotlin.math.sin(a)).toFloat()),
+                            androidx.compose.ui.geometry.Offset(c.x + (r2 * kotlin.math.cos(a)).toFloat(), c.y + (r2 * kotlin.math.sin(a)).toFloat()),
+                            strokeWidth = 1.5.dp.toPx())
+                    }
+                    val inset = 26.dp.toPx()
+                    val arc = androidx.compose.ui.geometry.Size(size.width - inset * 2, size.height - inset * 2)
+                    val tl = androidx.compose.ui.geometry.Offset(inset, inset)
+                    drawArc(track, 140f, 260f, false, tl, arc, style = androidx.compose.ui.graphics.drawscope.Stroke(10.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round))
+                    drawArc(primary, 140f, 170f, false, tl, arc, style = androidx.compose.ui.graphics.drawscope.Stroke(10.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round))
+                }
+                val interaction = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+                androidx.compose.material3.Surface(
+                    onClick = onSpeak,
+                    interactionSource = interaction,
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.primaryContainer,
+                    shadowElevation = 4.dp,
+                    modifier = Modifier.size(132.dp).scale(pulse).pressScale(interaction, 0.94f)
+                        .semantics { contentDescription = "แตะแล้วพูดสิ่งที่ได้รับ เพื่อตรวจ" },
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                        Icon(Icons.Rounded.Mic, null, tint = primary, modifier = Modifier.size(44.dp))
+                        Text("แตะแล้วพูด", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurface)
+                    }
                 }
             }
+            Text("พูดหรือวางข้อความที่ได้รับ เพื่อตรวจว่าเป็นมิจฉาชีพไหม",
+                style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+            Spacer(Modifier.height(14.dp))
             Button(
-                onClick = onSpeak,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 66.dp),
-                shape = RoundedCornerShape(33.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = Lime, contentColor = Navy900),
-            ) {
-                Icon(Icons.Rounded.Mic, null, Modifier.size(28.dp))
-                Spacer(Modifier.width(10.dp))
-                Text("กดแล้วพูดได้เลย", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            }
-            OutlinedButton(
                 onClick = onType,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 58.dp),
-                shape = RoundedCornerShape(29.dp),
-                border = androidx.compose.foundation.BorderStroke(1.dp, Color.White.copy(alpha = 0.28f)),
-                colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.White.copy(alpha = 0.10f), contentColor = Color.White),
+                modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
+                shape = RoundedCornerShape(28.dp),
             ) {
-                Icon(Icons.Rounded.Edit, null, Modifier.size(22.dp))
-                Spacer(Modifier.width(10.dp))
+                Icon(Icons.Rounded.Edit, null, Modifier.size(20.dp))
+                Spacer(Modifier.width(8.dp))
                 Text("พิมพ์หรือวางข้อความ", style = MaterialTheme.typography.titleSmall)
             }
         }
     }
 }
 
+/** List row in the reference style: icon in a soft circle, title, subtitle, optional badge, chevron. */
 @Composable
-private fun CaregiverCard(settings: AppSettings, onCall: () -> Unit, onSetup: () -> Unit) {
+private fun HomeRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    title: String,
+    subtitle: String,
+    badge: RiskLevel? = null,
+    onClick: () -> Unit,
+) {
+    val interaction = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
     Card(
-        onClick = if (settings.hasCaregiver) onCall else onSetup,
-        shape = RoundedCornerShape(28.dp),
+        onClick = onClick,
+        interactionSource = interaction,
+        modifier = Modifier.fillMaxWidth().pressScale(interaction),
+        shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
-        Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(
-                Modifier.size(52.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(Icons.Rounded.FamilyRestroom, null, tint = MaterialTheme.colorScheme.onPrimaryContainer, modifier = Modifier.size(28.dp))
+        Row(Modifier.padding(horizontal = 16.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(44.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceVariant), contentAlignment = Alignment.Center) {
+                Icon(icon, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))
             }
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
-                if (settings.hasCaregiver) {
-                    Text("ผู้ดูแลของคุณ", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(settings.caregiverName.ifBlank { settings.caregiverPhone }, style = MaterialTheme.typography.titleMedium)
-                    Text("แตะเพื่อโทรหา", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
-                } else {
-                    Text("เพิ่มลูกหลานหรือผู้ดูแล", style = MaterialTheme.typography.titleMedium)
-                    Text("เมื่อพบอันตราย ส่งข้อความเตือนให้เขาได้ทันที", style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(title, style = MaterialTheme.typography.titleSmall, maxLines = 1)
+                Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+            }
+            if (badge != null) {
+                val c = riskColors(badge)
+                androidx.compose.material3.Surface(shape = CircleShape, color = c.container, contentColor = c.onContainer) {
+                    Text(if (badge == RiskLevel.SAFE) "เปิด" else "ปิด", Modifier.padding(horizontal = 10.dp, vertical = 2.dp),
+                        style = MaterialTheme.typography.labelMedium)
                 }
+                Spacer(Modifier.width(6.dp))
             }
-            Icon(
-                if (settings.hasCaregiver) Icons.Rounded.Call else Icons.AutoMirrored.Rounded.ArrowForward,
-                null, tint = MaterialTheme.colorScheme.primary,
-            )
+            Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
 
+/** Recent check: what it was, when, and a soft risk badge. */
 @Composable
-private fun CallGuardCard(settings: AppSettings, onOpen: () -> Unit) {
-    val context = androidx.compose.ui.platform.LocalContext.current
-    val screening = remember { isCallScreeningEnabled(context) }
-    val on = screening || settings.assistantPaired
-    val c = riskColors(if (on) RiskLevel.SAFE else RiskLevel.SUSPICIOUS)
+private fun RecentRow(r: RiskResult, onClick: () -> Unit) {
+    val (icon, type) = when (r.type) {
+        CheckType.MESSAGE -> Icons.Rounded.Sms to "ข้อความ"
+        CheckType.LINK -> Icons.Rounded.Link to "ลิงก์"
+        CheckType.PHONE -> Icons.Rounded.PhoneInTalk to "เบอร์โทร"
+        CheckType.TRANSACTION -> Icons.Rounded.Payments to "การโอนเงิน"
+    }
+    val c = riskColors(r.level)
     Card(
-        onClick = onOpen,
-        shape = RoundedCornerShape(28.dp),
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
-        Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(52.dp).clip(CircleShape).background(c.container), contentAlignment = Alignment.Center) {
-                Icon(Icons.Rounded.PhoneLocked, null, tint = c.main, modifier = Modifier.size(28.dp))
+        Row(Modifier.padding(horizontal = 16.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(44.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceVariant), contentAlignment = Alignment.Center) {
+                Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(22.dp))
             }
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
-                Text("ป้องกันสายโทร", style = MaterialTheme.typography.titleMedium)
-                Text(
-                    when {
-                        settings.assistantActive -> "เปิดอยู่ • ผู้ช่วย AI รับสายเบอร์แปลกให้ก่อน"
-                        screening -> "เปิดอยู่ • บล็อกเบอร์อันตรายให้อัตโนมัติ"
-                        else -> "ยังไม่เปิด • แตะเพื่อเปิดการกรองสายและการฟังระหว่างคุย"
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (on) c.main else MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                Text(r.inputPreview.ifBlank { r.matchedScamType ?: type }, style = MaterialTheme.typography.titleSmall, maxLines = 1,
+                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                Text("$type • ${relativeTime(r.analyzedAt)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, tint = MaterialTheme.colorScheme.primary)
+            androidx.compose.material3.Surface(shape = CircleShape, color = c.container, contentColor = c.onContainer) {
+                Text(r.level.label(), Modifier.padding(horizontal = 10.dp, vertical = 2.dp), style = MaterialTheme.typography.labelMedium)
+            }
         }
     }
 }
 
-@Composable
-private fun HotlineCard(onCall: () -> Unit) {
-    val danger = riskColors(RiskLevel.DANGEROUS)
-    Card(
-        onClick = onCall,
-        shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.cardColors(containerColor = danger.container),
-    ) {
-        Row(Modifier.padding(18.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(52.dp).clip(CircleShape).background(danger.main), contentAlignment = Alignment.Center) {
-                Icon(Icons.Rounded.SupportAgent, null, tint = danger.onMain, modifier = Modifier.size(28.dp))
-            }
-            Spacer(Modifier.width(14.dp))
-            Column(Modifier.weight(1f)) {
-                Text("โดนหลอก หรือไม่แน่ใจ?", style = MaterialTheme.typography.titleMedium, color = danger.onContainer)
-                Text("โทรสายด่วน 1441 ศูนย์ AOC ตลอด 24 ชม.", style = MaterialTheme.typography.bodyMedium, color = danger.onContainer)
-            }
-            Icon(Icons.Rounded.Call, null, tint = danger.main, modifier = Modifier.size(28.dp))
-        }
-    }
-}

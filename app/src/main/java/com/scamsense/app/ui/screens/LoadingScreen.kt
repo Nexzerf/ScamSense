@@ -65,7 +65,7 @@ fun LoadingScreen(state: StartupState, modifier: Modifier = Modifier) {
     Box(
         modifier
             .fillMaxSize()
-            .glowBackdrop(),
+            .background(MaterialTheme.colorScheme.background),
     ) {
         Column(
             Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(32.dp),
@@ -77,7 +77,7 @@ fun LoadingScreen(state: StartupState, modifier: Modifier = Modifier) {
                 Canvas(Modifier.fillMaxSize()) {
                     val r = size.minDimension / 2
                     drawArc(
-                        Lime, startAngle = ring * 360f - 90f, sweepAngle = 60f, useCenter = false,
+                        Color(0xFF1F5EFF), startAngle = ring * 360f - 90f, sweepAngle = 60f, useCenter = false,
                         topLeft = androidx.compose.ui.geometry.Offset(r * 0.06f, r * 0.06f),
                         size = androidx.compose.ui.geometry.Size(r * 1.88f, r * 1.88f),
                         style = Stroke(3.dp.toPx(), cap = StrokeCap.Round),
@@ -86,19 +86,19 @@ fun LoadingScreen(state: StartupState, modifier: Modifier = Modifier) {
                 ShieldOrb(size = 196.dp, pulse = breathe)
             }
             Spacer(Modifier.height(28.dp))
-            Text("ScamSense", style = MaterialTheme.typography.displaySmall, color = Color.White, fontWeight = FontWeight.Bold)
+            Text("ScamSense", style = MaterialTheme.typography.displaySmall, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold)
             Text(
                 "ผู้ช่วยรู้ทันมิจฉาชีพ สำหรับคุณและครอบครัว",
                 style = MaterialTheme.typography.bodyLarge,
-                color = Color.White.copy(alpha = 0.88f),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
             )
             Spacer(Modifier.weight(1f))
             LinearProgressIndicator(
                 progress = { progress },
                 modifier = Modifier.fillMaxWidth(0.7f).height(8.dp).clip(RoundedCornerShape(8.dp)),
-                color = Lime,
-                trackColor = Color.White.copy(alpha = 0.18f),
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.surfaceVariant,
                 strokeCap = StrokeCap.Round,
                 drawStopIndicator = {},
             )
@@ -112,14 +112,14 @@ fun LoadingScreen(state: StartupState, modifier: Modifier = Modifier) {
                     status,
                     modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White.copy(alpha = 0.9f),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             Spacer(Modifier.height(8.dp))
             Text(
                 "ทำงานในเครื่อง 100% • ไม่ส่งข้อมูลออกไปไหน",
                 style = MaterialTheme.typography.labelSmall,
-                color = Color.White.copy(alpha = 0.7f),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             Spacer(Modifier.height(12.dp))
         }

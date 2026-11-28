@@ -117,7 +117,6 @@ fun ResultScreen(
         if (result.level == RiskLevel.DANGEROUS) haptic.performHapticFeedback(HapticFeedbackType.LongPress)
     }
 
-    val hero = com.scamsense.app.ui.theme.riskHero(result.level)
     Column(
         Modifier
             .fillMaxSize()
@@ -128,39 +127,39 @@ fun ResultScreen(
         Column(
             Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(bottomStart = 36.dp, bottomEnd = 36.dp))
-                .glowBackdrop(top = hero.bottom, bottom = hero.top, glowA = hero.accent, glowB = hero.accent)
+                .clip(RoundedCornerShape(bottomStart = 32.dp, bottomEnd = 32.dp))
+                .background(MaterialTheme.colorScheme.surface)
                 .statusBarsPadding()
                 .padding(bottom = 28.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Row(Modifier.fillMaxWidth().padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onBack, modifier = Modifier.size(56.dp)) {
-                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "ย้อนกลับ", tint = colors.onMain)
+                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "ย้อนกลับ", tint = MaterialTheme.colorScheme.onSurface)
                 }
                 Text(
                     "ผลการตรวจ" + typeSuffix(result.type),
                     style = MaterialTheme.typography.titleLarge,
-                    color = colors.onMain,
+                    color = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.weight(1f),
                 )
                 IconButton(onClick = onDone, modifier = Modifier.size(56.dp)) {
-                    Icon(Icons.Rounded.Close, contentDescription = "ปิด กลับหน้าหลัก", tint = colors.onMain)
+                    Icon(Icons.Rounded.Close, contentDescription = "ปิด กลับหน้าหลัก", tint = MaterialTheme.colorScheme.onSurface)
                 }
             }
             if (result.shouldBlock) BlockBanner(colors.onMain, blockText(result.type))
-            com.scamsense.app.ui.components.SegmentedGauge(result.score, result.level, hero.accent, onColor = Color.White)
+            com.scamsense.app.ui.components.SegmentedGauge(result.score, result.level, colors.main, onColor = MaterialTheme.colorScheme.onSurface)
             Text(
                 result.level.label(),
                 style = MaterialTheme.typography.headlineLarge,
-                color = colors.onMain,
+                color = colors.main,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.semantics { heading() },
             )
             Text(
                 result.summary,
                 style = MaterialTheme.typography.bodyLarge,
-                color = colors.onMain,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .padding(horizontal = 28.dp, vertical = 6.dp)
@@ -168,7 +167,7 @@ fun ResultScreen(
             )
             result.matchedScamType?.let { type ->
                 Surface(
-                    shape = RoundedCornerShape(20.dp), color = colors.onMain.copy(alpha = 0.16f), contentColor = colors.onMain,
+                    shape = RoundedCornerShape(20.dp), color = colors.container, contentColor = colors.onContainer,
                     modifier = Modifier.padding(horizontal = 24.dp),
                 ) {
                     Text("ลักษณะ: $type", Modifier.padding(horizontal = 16.dp, vertical = 8.dp), style = MaterialTheme.typography.labelLarge,
@@ -293,8 +292,8 @@ private fun BlockBanner(onColor: Color, text: String) {
         modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp).scale(pulse),
         shape = RoundedCornerShape(30.dp),
         // Solid coral pill with near-black wine text: unmistakable, AA contrast.
-        color = com.scamsense.app.ui.theme.riskHero(RiskLevel.DANGEROUS).accent,
-        contentColor = com.scamsense.app.ui.theme.riskHero(RiskLevel.DANGEROUS).top,
+        color = riskColors(RiskLevel.DANGEROUS).main,
+        contentColor = riskColors(RiskLevel.DANGEROUS).onMain,
     ) {
         Row(Modifier.padding(horizontal = 18.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Rounded.Block, null, Modifier.size(28.dp))

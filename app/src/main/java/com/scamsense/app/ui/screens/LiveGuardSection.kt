@@ -7,6 +7,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -135,10 +136,10 @@ fun LiveGuardSection(
     ) {
         Column(Modifier.fillMaxWidth().padding(18.dp)) {
             Text(
-                "เมื่อรับสายจากเบอร์ที่ไม่อยู่ในรายชื่อ ScamSense จะฟังเสียงปลายสาย แปลงเป็นข้อความในเครื่อง " +
-                    "ถ้าเจอคำของมิจฉาชีพจะเตือนทันที หรือวางสายให้ ไม่มีการบันทึกเสียงและไม่ส่งเสียงออกนอกเครื่อง",
-                style = MaterialTheme.typography.bodyMedium,
+                "ฟังเสียงปลายสายของเบอร์แปลก แล้วเตือนหรือวางสายให้ ไม่บันทึกเสียง",
+                style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            Spacer(Modifier.height(12.dp))
             if (!state.supported) {
                 Spacer(Modifier.height(10.dp))
                 Text("ต้องใช้ Android 11 ขึ้นไป", color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.titleSmall)
@@ -247,16 +248,11 @@ fun LiveGuardSection(
             // ---- switches
             Toggle(
                 "เปิดฟังระหว่างคุย",
-                if (state.ready) "พร้อมทำงานกับสายถัดไปจากเบอร์ที่ไม่รู้จัก" else "ทำข้อด้านบนให้ครบก่อน และเปิด \"กรองสาย\" ในข้อ 1",
+                if (state.ready) "พร้อมใช้กับสายถัดไป" else "ทำข้อด้านบนให้ครบก่อน",
                 settings.liveGuardEnabled && state.ready, enabled = state.ready,
             ) { v -> onUpdate { it.copy(liveGuardEnabled = v) } }
-            Toggle("วางสายให้อัตโนมัติเมื่อแน่ใจว่าเป็นมิจฉาชีพ", "นับถอยหลัง 4 วินาที แตะยกเลิกได้ ถ้าปิดไว้จะเตือนอย่างเดียว",
+            Toggle("วางสายอัตโนมัติ", "เมื่อแน่ใจว่าเป็นมิจฉาชีพ (แตะยกเลิกได้)",
                 settings.liveAutoHangUp, enabled = true) { v -> onUpdate { it.copy(liveAutoHangUp = v) } }
-            Spacer(Modifier.height(10.dp))
-            Text(
-                "ส่วนดึงเสียงสายดัดแปลงจาก CallVault และ ShizuCallRecorder (GPL-3.0) • แปลงเสียงด้วย whisper.cpp (MIT)",
-                style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
         }
     }
 }
@@ -310,16 +306,19 @@ private fun ShizukuGuide(onOpenDevOptions: () -> Unit) {
 
 @Composable
 private fun Check(icon: ImageVector, title: String, ok: Boolean, subtitle: String) {
-    val c = riskColors(if (ok) RiskLevel.SAFE else RiskLevel.SUSPICIOUS)
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.size(40.dp).clip(CircleShape).background(c.container), contentAlignment = Alignment.Center) {
-            Icon(if (ok) Icons.Rounded.CheckCircle else icon, null, tint = c.main, modifier = Modifier.size(24.dp))
-        }
+    // Neutral row; only the trailing mark carries state (green check / empty ring).
+    Row(Modifier.fillMaxWidth().heightIn(min = 52.dp), verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            Modifier.size(40.dp).clip(RoundedCornerShape(14.dp)).background(MaterialTheme.colorScheme.surfaceVariant),
+            contentAlignment = Alignment.Center,
+        ) { Icon(icon, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(22.dp)) }
         Spacer(Modifier.width(12.dp))
-        Column {
+        Column(Modifier.weight(1f)) {
             Text(title, style = MaterialTheme.typography.titleSmall)
             Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
+        if (ok) Icon(Icons.Rounded.CheckCircle, contentDescription = "พร้อม", tint = riskColors(RiskLevel.SAFE).main, modifier = Modifier.size(24.dp))
+        else Box(Modifier.size(22.dp).border(2.dp, MaterialTheme.colorScheme.outline, CircleShape))
     }
 }
 
@@ -457,8 +456,7 @@ private fun BuiltInPairing(state: LiveGuardState, onRefresh: () -> Unit) {
 
     if (state.builtInPaired) {
         Check(Icons.Rounded.Link, "จับคู่ในแอปแล้ว", true,
-            if (state.autoEnable) "ไม่ต้องใช้แอป Shizuku • เปิดการเชื่อมต่อให้เองเมื่อมีสาย แม้รีสตาร์ทเครื่อง"
-            else "ไม่ต้องใช้แอป Shizuku • ต้องเปิด \"การแก้ไขข้อบกพร่องแบบไร้สาย\" ค้างไว้")
+            if (state.autoEnable) "เชื่อมต่อเองเมื่อมีสาย" else "เปิด \"แก้ไขข้อบกพร่องแบบไร้สาย\" ค้างไว้")
         // Fallback when automatic discovery is slow on a phone: the Wireless debugging page
         // shows "IP address & Port"; the number after ':' is the connect port.
         var portText by remember { mutableStateOf(com.scamsense.app.livecall.adb.BuiltInShell.savedConnectPort(context)?.toString().orEmpty()) }
@@ -466,7 +464,7 @@ private fun BuiltInPairing(state: LiveGuardState, onRefresh: () -> Unit) {
             androidx.compose.material3.OutlinedTextField(
                 value = portText,
                 onValueChange = { v -> portText = v.filter { it.isDigit() }.take(5) },
-                label = { Text("พอร์ตเชื่อมต่อ (ถ้าเชื่อมต่อช้า)") },
+                label = { Text("พอร์ตเชื่อมต่อ (ไม่บังคับ)") },
                 singleLine = true,
                 keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
                 shape = RoundedCornerShape(20.dp),
@@ -483,8 +481,6 @@ private fun BuiltInPairing(state: LiveGuardState, onRefresh: () -> Unit) {
                 modifier = Modifier.heightIn(min = 48.dp),
             ) { Text("บันทึก", style = MaterialTheme.typography.labelLarge) }
         }
-        Text("ดูได้ที่ การแก้ไขข้อบกพร่องแบบไร้สาย → \"ที่อยู่ IP และพอร์ต\" ตัวเลขหลังเครื่องหมาย :",
-            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             TextButton(onClick = { showLog = true }, modifier = Modifier.heightIn(min = 48.dp)) {
                 Text("ดูบันทึกการเชื่อมต่อ", style = MaterialTheme.typography.labelLarge)
@@ -494,12 +490,15 @@ private fun BuiltInPairing(state: LiveGuardState, onRefresh: () -> Unit) {
             }
         }
     } else {
-        Check(Icons.Rounded.Link, "จับคู่ในแอป (แนะนำ)", false, "ไม่ต้องลงแอปอื่น ทำครั้งเดียว ให้ลูกหลานช่วยได้")
-        Spacer(Modifier.height(8.dp))
-        PAIR_STEPS.forEachIndexed { i, step ->
-            Row(Modifier.padding(vertical = 4.dp), verticalAlignment = Alignment.Top) {
-                Text("${i + 1}.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary, modifier = Modifier.width(24.dp))
-                Text(step, style = MaterialTheme.typography.bodyMedium)
+        Check(Icons.Rounded.Link, "จับคู่ในแอป", false, "ทำครั้งเดียว ไม่ต้องลงแอปอื่น")
+        var showSteps by remember { mutableStateOf(false) }
+        TextButton(onClick = { showSteps = !showSteps }, modifier = Modifier.heightIn(min = 48.dp)) {
+            Text(if (showSteps) "ซ่อนวิธีจับคู่" else "ดูวิธีจับคู่ (5 ขั้น)", style = MaterialTheme.typography.labelLarge)
+        }
+        if (showSteps) PAIR_STEPS.forEachIndexed { i, step ->
+            Row(Modifier.padding(vertical = 3.dp), verticalAlignment = Alignment.Top) {
+                Text("${i + 1}.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary, modifier = Modifier.width(20.dp))
+                Text(step, style = MaterialTheme.typography.bodySmall)
             }
         }
         Spacer(Modifier.height(8.dp))

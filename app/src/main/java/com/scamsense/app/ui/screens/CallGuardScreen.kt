@@ -130,12 +130,6 @@ fun CallGuardScreen(
                 ),
                 Modifier.padding(top = 8.dp).enterUp(0),
             )
-            Text(
-                "ตรวจเฉพาะสายจากเบอร์ที่ไม่อยู่ในรายชื่อ สายจากคนในรายชื่อผู้ติดต่อจะดังตามปกติเสมอ",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.enterUp(1),
-            )
 
             // ---------------------------------------------------------------- step 1
             com.scamsense.app.ui.components.StepHeader(1, "เปิดการกรองสาย", done = screeningOn, modifier = Modifier.enterUp(2))
@@ -169,17 +163,17 @@ fun CallGuardScreen(
             Text("ตัวเลือกการกรองสาย", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(start = 6.dp).enterUp(3))
             GuardCard(Modifier.enterUp(3)) {
-                ToggleRow("เตือนเมื่อมีสายจากเบอร์ไม่รู้จัก", "ขึ้นข้อความเตือนพร้อมวิธีสังเกตมิจฉาชีพ", settings.callWarnings) { v ->
+                ToggleRow("เตือนเมื่อเบอร์ไม่รู้จักโทรมา", "แสดงวิธีสังเกตมิจฉาชีพ", settings.callWarnings) { v ->
                     onUpdate { it.copy(callWarnings = v) }
                 }
                 Spacer(Modifier.size(10.dp))
                 ToggleRow(
-                    "บล็อกสายจากต่างประเทศทั้งหมด",
-                    "ระวัง: ถ้ามีลูกหลานอยู่ต่างประเทศ ให้บันทึกเบอร์เขาในรายชื่อผู้ติดต่อก่อน",
+                    "บล็อกสายจากต่างประเทศ",
+                    "บันทึกเบอร์ญาติที่อยู่ต่างประเทศไว้ก่อน",
                     settings.blockInternational,
                 ) { v -> onUpdate { it.copy(blockInternational = v) } }
                 Spacer(Modifier.size(6.dp))
-                Text("เบอร์ +697 / +698 และเบอร์ที่คุณรายงานไว้ จะถูกบล็อกเสมอ",
+                Text("+697 / +698 และเบอร์ที่รายงานไว้ ถูกบล็อกเสมอ",
                     style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
 
@@ -309,7 +303,7 @@ private fun GuardCard(modifier: Modifier = Modifier, content: @Composable () -> 
 private fun StatusRow(icon: ImageVector, title: String, ok: Boolean, subtitle: String) {
     val c = riskColors(if (ok) RiskLevel.SAFE else RiskLevel.SUSPICIOUS)
     Row(verticalAlignment = Alignment.CenterVertically) {
-        com.scamsense.app.ui.components.IconChip(if (ok) Icons.Rounded.CheckCircle else icon, c.main)
+        com.scamsense.app.ui.components.IconChip(icon, MaterialTheme.colorScheme.primary)
         Spacer(Modifier.width(12.dp))
         Column {
             Text(title, style = MaterialTheme.typography.titleSmall)
@@ -355,20 +349,21 @@ private fun ProgressOverview(steps: List<Pair<String, Boolean>>, modifier: Modif
                 Box(
                     Modifier.fillMaxWidth(anim).height(10.dp).clip(RoundedCornerShape(5.dp))
                         .background(androidx.compose.ui.graphics.Brush.horizontalGradient(
-                            listOf(com.scamsense.app.ui.theme.Electric, com.scamsense.app.ui.theme.Mint))),
+                            listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.primary))),
                 )
             }
             Spacer(Modifier.size(12.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 steps.forEach { (name, ok) ->
-                    val c = riskColors(if (ok) RiskLevel.SAFE else RiskLevel.SUSPICIOUS)
                     Row(
-                        Modifier.weight(1f).clip(RoundedCornerShape(16.dp)).background(c.container).padding(horizontal = 8.dp, vertical = 8.dp),
+                        Modifier.weight(1f).clip(RoundedCornerShape(16.dp)).background(MaterialTheme.colorScheme.surfaceVariant)
+                            .padding(horizontal = 10.dp, vertical = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Icon(if (ok) Icons.Rounded.CheckCircle else Icons.Rounded.Shield, null, tint = c.main, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(4.dp))
-                        Text(name, style = MaterialTheme.typography.labelSmall, color = c.onContainer, maxLines = 1)
+                        Icon(if (ok) Icons.Rounded.CheckCircle else Icons.Rounded.Shield, null,
+                            tint = if (ok) riskColors(RiskLevel.SAFE).main else MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(6.dp))
+                        Text(name, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurface, maxLines = 1)
                     }
                 }
             }

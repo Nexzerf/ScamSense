@@ -5,6 +5,7 @@ import android.os.Looper
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -57,7 +58,7 @@ class AppFlowTest {
     }
 
     @Test fun startupThenCheckMessageShowsDangerResult() {
-        waitForText("วันนี้มีอะไรน่าสงสัยไหม?")
+        waitForText("แตะแล้วพูด")
         compose.onNodeWithText("พิมพ์หรือวางข้อความ").performClick()
         waitForText("ตรวจข้อความ")
         compose.onNode(hasSetTextAction()).performTextInput(
@@ -67,15 +68,15 @@ class AppFlowTest {
         waitForText("หยุด! อย่าทำตามข้อความนี้")
         screenshot("20_flow_result")
         compose.onNodeWithText("ตรวจรายการอื่น").performScrollTo().performClick()
-        waitForText("วันนี้มีอะไรน่าสงสัยไหม?")
+        waitForText("แตะแล้วพูด")
         // History tab shows the check we just made.
-        compose.onNodeWithText("ประวัติ").performClick()
+        compose.onNodeWithContentDescription("ประวัติ").performClick()
         waitForText("ทั้งหมด 1")
         screenshot("21_flow_history")
     }
 
     @Test fun emptyPhoneInputShowsFriendlyError() {
-        waitForText("วันนี้มีอะไรน่าสงสัยไหม?")
+        waitForText("แตะแล้วพูด")
         compose.onNodeWithText("เบอร์โทร").performClick()
         waitForText("ตรวจเบอร์โทร")
         compose.onNode(hasSetTextAction()).performTextInput("ไม่มีเบอร์")
@@ -84,7 +85,7 @@ class AppFlowTest {
     }
 
     @Test fun sharedTextFromAnotherAppIsCheckedAutomatically() {
-        waitForText("วันนี้มีอะไรน่าสงสัยไหม?")
+        waitForText("แตะแล้วพูด")
         run {
             activity.onNewIntent(
                 Intent(Intent.ACTION_SEND).setType("text/plain")
@@ -95,7 +96,7 @@ class AppFlowTest {
     }
 
     @Test fun maliciousShareIntentWithHugeTextDoesNotCrash() {
-        waitForText("วันนี้มีอะไรน่าสงสัยไหม?")
+        waitForText("แตะแล้วพูด")
         run {
             activity.onNewIntent(
                 Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, "\u0000ด่วน".repeat(200_000)),
